@@ -23,8 +23,9 @@ if 'show_status' not in st.session_state:
 # Initialize Groq client
 try:
     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-except:
-    st.error("⚠️ Groq API key not found in secrets!")
+except Exception as e:
+    st.error(f"⚠️ Groq API Error: {e}")
+    st.info("Make sure GROQ_API_KEY is set in Streamlit secrets (Settings → Secrets)")
     client = None
 
 # Function to convert image to base64
@@ -75,7 +76,6 @@ Format as valid JSON only."""
             max_tokens=500
         )
         result = response.choices[0].message.content
-        # Try to parse JSON
         result = result.strip()
         if result.startswith("```json"):
             result = result[7:]
@@ -295,41 +295,67 @@ st.markdown("""
         background: #d1e7dd;
         color: #0f5132;
     }
+    
+    /* Hide default streamlit buttons */
+    .stButton button {
+        display: none;
+    }
     </style>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 """, unsafe_allow_html=True)
 
-# Navigation Bar
+# JavaScript for handling icon clicks
+st.markdown("""
+    <script>
+    function handleStatusClick() {
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'status'}, '*');
+    }
+    function handleAIClick() {
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'ai'}, '*');
+    }
+    </script>
+""", unsafe_allow_html=True)
+
+# Navigation Bar with icons inside
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo" class="logo-img">' if logo_base64 else '<div style="width:60px;height:60px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;">🐾</div>'
 profile_html = f'<img src="data:image/png;base64,{default_base64}" alt="Profile" class="profile-img">' if default_base64 else '<div style="width:50px;height:50px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>'
 
-# Create columns for navigation
-nav_col1, nav_col2, nav_col3 = st.columns([8, 1, 1])
+# Create clickable navigation
+col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
 
-with nav_col1:
-    st.markdown(f"""
-        <div class="nav-container">
-            <div class="nav-left">
-                {logo_html}
-                <div class="brand-name">PawAlert</div>
-            </div>
+with col1:
+    status_clicked = st.button("status_icon", key="status_btn", label_visibility="hidden")
+with col2:
+    ai_clicked = st.button("ai_icon", key="ai_btn", label_visibility="hidden")
+
+if status_clicked:
+    st.session_state.show_status = not st.session_state.show_status
+    st.session_state.show_chatbot = False
+    st.rerun()
+
+if ai_clicked:
+    st.session_state.show_chatbot = not st.session_state.show_chatbot
+    st.session_state.show_status = False
+    st.rerun()
+
+st.markdown(f"""
+    <div class="nav-container">
+        <div class="nav-left">
+            {logo_html}
+            <div class="brand-name">PawAlert</div>
         </div>
-    """, unsafe_allow_html=True)
-
-with nav_col2:
-    if st.button("📊", key="status_btn", help="View Status"):
-        st.session_state.show_status = not st.session_state.show_status
-        st.session_state.show_chatbot = False
-
-with nav_col3:
-    if st.button("🤖", key="ai_btn", help="AI Assistant"):
-        st.session_state.show_chatbot = not st.session_state.show_chatbot
-        st.session_state.show_status = False
+        <div class="nav-right">
+            <i class="fas fa-chart-line nav-icon" title="Status" onclick="document.querySelector('[data-testid=stButton]:nth-of-type(1) button').click()"></i>
+            <i class="fas fa-robot nav-icon" title="AI Assistant" onclick="document.querySelector('[data-testid=stButton]:nth-of-type(2) button').click()"></i>
+            {profile_html}
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Status Panel
 if st.session_state.show_status:
-    st.markdown("### 📊 Case Status Dashboard")
+    st.markdown("### <i class='fas fa-chart-bar'></i> Case Status Dashboard", unsafe_allow_html=True)
     
     if len(st.session_state.cases) == 0:
         st.info("🔍 No cases filed yet. Use AI Sathi to report incidents.")
@@ -359,23 +385,24 @@ if st.session_state.show_chatbot:
     
     st.markdown("""
         <div class="welcome-box">
-            <h2 style="color: #e2a9f1; margin: 0;">👋 Hello! Welcome</h2>
-            <p style="color: #666; margin: 10px 0 0 0;">I am your <strong>AI Sathi</strong> 🤖, here to help rescue and protect animals in need. 
+            <h2 style="color: #e2a9f1; margin: 0;"><i class="fas fa-hand-wave"></i> Hello! Welcome</h2>
+            <p style="color: #666; margin: 10px 0 0 0;">I am your <strong>AI Sathi</strong> <i class="fas fa-robot"></i>, here to help rescue and protect animals in need. 
             Report injuries or file abuse complaints, and I'll assist you immediately!</p>
         </div>
     """, unsafe_allow_html=True)
     
     # Inquiry Type Selection
     inquiry_type = st.radio(
-        "📝 **Select Inquiry Type:**",
-        ["🏥 Animal Injury", "⚠️ Animal Abuse"],
-        horizontal=True
+        "**Select Inquiry Type:**",
+        ["<i class='fas fa-hospital'></i> Animal Injury", "<i class='fas fa-exclamation-triangle'></i> Animal Abuse"],
+        horizontal=True,
+        format_func=lambda x: x
     )
     
     st.markdown("---")
     
-    if inquiry_type == "🏥 Animal Injury":
-        st.markdown("### 🏥 Report Animal Injury")
+    if "Injury" in inquiry_type:
+        st.markdown("### <i class='fas fa-hospital'></i> Report Animal Injury", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -411,18 +438,18 @@ if st.session_state.show_chatbot:
                             st.markdown(f"{i}. {sug}")
                         
                         st.markdown("---")
-                        st.markdown("### 🏥 Recommended Veterinary Hospitals:")
+                        st.markdown("### <i class='fas fa-hospital-alt'></i> Recommended Veterinary Hospitals:", unsafe_allow_html=True)
                         
                         selected_hospitals = random.sample(HOSPITALS, 3)
                         
                         for hospital in selected_hospitals:
                             st.markdown(f"""
                                 <div class="hospital-card">
-                                    <h4 style="color: #e2a9f1; margin: 0 0 10px 0;">🏥 {hospital['name']}</h4>
-                                    <p style="margin: 5px 0;"><strong>📍 Location:</strong> {hospital['location']}</p>
-                                    <p style="margin: 5px 0;"><strong>⚕️ Speciality:</strong> {hospital['speciality']}</p>
-                                    <p style="margin: 5px 0;"><strong>🕐 Availability:</strong> {hospital['availability']}</p>
-                                    <p style="margin: 5px 0;"><strong>💰 Price Range:</strong> {hospital['price']}</p>
+                                    <h4 style="color: #e2a9f1; margin: 0 0 10px 0;"><i class="fas fa-hospital"></i> {hospital['name']}</h4>
+                                    <p style="margin: 5px 0;"><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {hospital['location']}</p>
+                                    <p style="margin: 5px 0;"><strong><i class="fas fa-stethoscope"></i> Speciality:</strong> {hospital['speciality']}</p>
+                                    <p style="margin: 5px 0;"><strong><i class="fas fa-clock"></i> Availability:</strong> {hospital['availability']}</p>
+                                    <p style="margin: 5px 0;"><strong><i class="fas fa-rupee-sign"></i> Price Range:</strong> {hospital['price']}</p>
                                 </div>
                             """, unsafe_allow_html=True)
                             
@@ -432,7 +459,7 @@ if st.session_state.show_chatbot:
                 st.warning("⚠️ Please fill in all required fields!")
     
     else:  # Animal Abuse
-        st.markdown("### ⚠️ File Animal Abuse Complaint")
+        st.markdown("### <i class='fas fa-exclamation-triangle'></i> File Animal Abuse Complaint", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         
@@ -462,11 +489,11 @@ if st.session_state.show_chatbot:
                         
                         st.markdown(f"""
                             <div class="case-card">
-                                <h3 style="color: #e2a9f1; margin: 0 0 15px 0;">📋 {case['case_title']}</h3>
-                                <p><strong>🆔 Case ID:</strong> {case['case_id']}</p>
-                                <p><strong>📅 Date:</strong> {case['date']}</p>
-                                <p><strong>📍 Location:</strong> {case['location']}</p>
-                                <p><strong>⚠️ Urgency:</strong> <span style="color: #d32f2f; font-weight: 600;">{case['urgency_level']}</span></p>
+                                <h3 style="color: #e2a9f1; margin: 0 0 15px 0;"><i class="fas fa-file-alt"></i> {case['case_title']}</h3>
+                                <p><strong><i class="fas fa-id-card"></i> Case ID:</strong> {case['case_id']}</p>
+                                <p><strong><i class="fas fa-calendar"></i> Date:</strong> {case['date']}</p>
+                                <p><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {case['location']}</p>
+                                <p><strong><i class="fas fa-exclamation-circle"></i> Urgency:</strong> <span style="color: #d32f2f; font-weight: 600;">{case['urgency_level']}</span></p>
                                 <hr>
                                 <p><strong>Complaint:</strong> {case['formal_complaint']}</p>
                                 <p><strong>Recommended Action:</strong> {case['recommended_action']}</p>
@@ -497,7 +524,7 @@ if not st.session_state.show_chatbot and not st.session_state.show_status:
                 <div style="background: linear-gradient(135deg, #e2a9f1 0%, #d896ea 100%); 
                             padding: 100px; border-radius: 20px; text-align: center;">
                     <h2 style="color: white; font-size: 48px;">🐾</h2>
-                    <p style="color: white;">Click the 🤖 AI Assistant to get started!</p>
+                    <p style="color: white;">Click the <i class="fas fa-robot"></i> AI Assistant to get started!</p>
                 </div>
             """, unsafe_allow_html=True)
     
