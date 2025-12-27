@@ -3,8 +3,7 @@ from groq import Groq
 import json
 from datetime import datetime
 import time
-import base64
-from PIL import Image
+import os
 
 # Page config
 st.set_page_config(
@@ -26,7 +25,7 @@ if 'chat_messages' not in st.session_state:
 if 'report_submitted' not in st.session_state:
     st.session_state.report_submitted = False
 
-# Custom CSS with Glassmorphism
+# Custom CSS with Your Beautiful Color Palette
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
@@ -43,127 +42,112 @@ st.markdown("""
         font-family: 'Roboto', sans-serif;
     }
     
-    /* Main background */
+    /* Main background - Cream */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-color: #FAF9F6;
         min-height: 100vh;
     }
     
-    /* Navigation Bar - Glassmorphism */
-    .navbar {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 1rem 2.5rem;
+    /* Navigation Bar - Primary Lavender */
+    .navbar-container {
+        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
+        padding: 1.5rem 2.5rem;
         border-radius: 20px;
         margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        box-shadow: 0 8px 32px rgba(226, 169, 241, 0.4);
     }
     
-    .nav-left {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .nav-logo-img {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-    .app-name {
-        color: white;
-        font-size: 1.8rem;
-        font-weight: 700;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-    
-    .nav-right {
+    .nav-logo-section {
         display: flex;
         align-items: center;
         gap: 1.5rem;
     }
     
-    .nav-icon {
-        color: white;
-        font-size: 1.4rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 0.7rem;
+    .logo-container {
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: 4px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .logo-icon {
+        font-size: 3rem;
+        color: #e2a9f1;
+    }
+    
+    .app-name {
+        color: white;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        letter-spacing: 1px;
+    }
+    
+    .nav-icon-btn {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(5px);
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 45px;
-        height: 45px;
-    }
-    
-    .nav-icon:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    .user-profile-img {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid rgba(255, 255, 255, 0.5);
         cursor: pointer;
         transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .nav-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    
+    .nav-icon-btn i {
+        font-size: 1.6rem;
+        color: white;
+    }
+    
+    .profile-container {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid rgba(255, 255, 255, 0.8);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
     
-    .user-profile-img:hover {
+    .profile-container:hover {
         transform: scale(1.1);
-        border-color: white;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
     
-    /* Hero Section - Glassmorphism */
+    .profile-icon {
+        font-size: 2rem;
+        color: #4A4459;
+    }
+    
+    /* Hero Section */
     .hero-section {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 25px;
-        padding: 3rem;
-        margin: 2rem 0;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 25px;
+        margin: 2rem 0;
+        box-shadow: 0 4px 20px rgba(226, 169, 241, 0.15);
     }
     
-    .hero-image-container {
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-    }
-    
-    .hero-image {
-        width: 100%;
-        height: auto;
-        display: block;
-        transition: transform 0.3s ease;
-    }
-    
-    .hero-image:hover {
-        transform: scale(1.02);
-    }
-    
-    /* AI Chat Button - Floating */
+    /* AI Chat Button - Warm Peach */
     .ai-button-container {
         position: fixed;
         bottom: 30px;
@@ -172,317 +156,273 @@ st.markdown("""
     }
     
     .ai-chat-button {
-        width: 75px;
-        height: 75px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: linear-gradient(135deg, #FFB4A2 0%, #FF9B87 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        box-shadow: 0 8px 30px rgba(255, 180, 162, 0.5);
         transition: all 0.3s ease;
         animation: pulse 2s infinite;
+        border: 3px solid rgba(255, 255, 255, 0.8);
     }
     
     .ai-chat-button:hover {
         transform: scale(1.15);
-        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 40px rgba(255, 180, 162, 0.7);
     }
     
     .ai-chat-button i {
-        font-size: 2.2rem;
+        font-size: 2.5rem;
         color: white;
     }
     
     @keyframes pulse {
         0%, 100% {
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            box-shadow: 0 8px 30px rgba(255, 180, 162, 0.5);
         }
         50% {
-            box-shadow: 0 8px 50px 0 rgba(31, 38, 135, 0.6);
+            box-shadow: 0 10px 45px rgba(255, 180, 162, 0.8);
         }
     }
     
-    /* Chat Interface - Glassmorphism */
+    /* Chat Interface - Lavender */
     .chat-container {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: white;
         border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         max-width: 900px;
         margin: 2rem auto;
+        border: 2px solid #e2a9f1;
     }
     
     .chat-header {
-        color: white;
-        font-size: 1.6rem;
-        font-weight: 500;
+        color: #4A4459;
+        font-size: 1.8rem;
+        font-weight: 600;
         margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
         gap: 0.8rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2a9f1;
     }
     
     .chat-message {
         padding: 1.2rem 1.5rem;
         border-radius: 15px;
         margin: 1rem 0;
-        font-size: 1rem;
-        line-height: 1.6;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #4A4459;
     }
     
     .chat-message.user {
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(5px);
-        color: white;
+        background: #FAF9F6;
         margin-left: 20%;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid #e2a9f1;
     }
     
     .chat-message.assistant {
-        background: rgba(102, 126, 234, 0.3);
-        backdrop-filter: blur(5px);
+        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
         color: white;
         margin-right: 20%;
-        border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
-    /* Report Form - Glassmorphism */
-    .report-form {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 2rem;
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        margin: 2rem 0;
-    }
-    
+    /* Form Section */
     .form-section-title {
-        color: white;
-        font-size: 1.4rem;
-        font-weight: 500;
-        margin-bottom: 1.5rem;
+        color: #4A4459;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 1.5rem 0;
         display: flex;
         align-items: center;
         gap: 0.8rem;
     }
     
-    /* Success Message - Glassmorphism */
+    /* Success Message - Sage Green */
     .success-message {
-        background: rgba(76, 175, 80, 0.2);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 2px solid rgba(76, 175, 80, 0.5);
+        background: linear-gradient(135deg, #A8C9A5 0%, #95B892 100%);
         color: white;
         padding: 2rem;
         border-radius: 20px;
         text-align: center;
         margin: 2rem 0;
-        box-shadow: 0 8px 32px 0 rgba(76, 175, 80, 0.3);
+        box-shadow: 0 6px 25px rgba(168, 201, 165, 0.4);
     }
     
     .success-message h2 {
-        font-size: 1.8rem;
-        font-weight: 500;
+        font-size: 2rem;
+        font-weight: 600;
         margin-bottom: 0.5rem;
     }
     
     .success-message h3 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
         font-weight: 400;
         margin: 0.5rem 0;
     }
     
-    /* Case Cards - Glassmorphism */
+    /* Ambulance Button - Warm Peach */
+    .ambulance-btn {
+        background: linear-gradient(135deg, #FFB4A2 0%, #FF9B87 100%) !important;
+        color: white !important;
+        padding: 1.2rem 2.5rem !important;
+        border-radius: 30px !important;
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+        border: none !important;
+        box-shadow: 0 6px 25px rgba(255, 180, 162, 0.5) !important;
+        animation: glow 2s infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% {
+            box-shadow: 0 6px 25px rgba(255, 180, 162, 0.5);
+        }
+        50% {
+            box-shadow: 0 8px 35px rgba(255, 180, 162, 0.8);
+        }
+    }
+    
+    /* Case Cards */
     .case-card {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: 1.5rem;
+        background: white;
+        padding: 1.8rem;
         border-radius: 20px;
         margin: 1rem 0;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        border-left: 5px solid rgba(102, 126, 234, 0.8);
-        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border-left: 6px solid #e2a9f1;
+        color: #4A4459;
     }
     
     .case-id {
-        color: white;
-        font-weight: 600;
-        font-size: 1.3rem;
+        color: #e2a9f1;
+        font-weight: 700;
+        font-size: 1.4rem;
         margin-bottom: 1rem;
     }
     
     .case-status {
-        background: rgba(76, 175, 80, 0.3);
-        backdrop-filter: blur(5px);
+        background: linear-gradient(135deg, #A8C9A5 0%, #95B892 100%);
         color: white;
-        padding: 0.5rem 1.2rem;
-        border-radius: 20px;
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
         display: inline-block;
         margin-top: 1rem;
-        border: 1px solid rgba(76, 175, 80, 0.5);
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 1rem;
     }
     
-    /* Vet Suggestions Styling */
+    /* Vet Suggestions - Deep Plum Text */
     .vet-suggestions {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: white;
         padding: 2rem;
         border-radius: 20px;
         margin: 1.5rem 0;
-        color: white;
-        line-height: 1.8;
+        color: #4A4459;
+        line-height: 1.9;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 2px solid #e2a9f1;
     }
     
     .vet-suggestions h3 {
-        color: white;
-        font-size: 1.4rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
+        color: #e2a9f1;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    
+    .vet-suggestions strong {
+        color: #4A4459;
+        font-weight: 600;
     }
     
     /* No Cases Container */
     .no-cases-container {
         text-align: center;
-        padding: 3rem;
-        color: white;
+        padding: 4rem 2rem;
+        color: #4A4459;
+    }
+    
+    .no-cases-icon {
+        font-size: 6rem;
+        color: #e2a9f1;
+        opacity: 0.6;
+        margin-bottom: 1.5rem;
     }
     
     .no-cases-text {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         font-weight: 400;
-        margin-top: 1rem;
-        opacity: 0.9;
+        opacity: 0.8;
     }
     
-    /* Buttons */
+    /* Buttons - Primary Lavender */
     .stButton > button {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.8rem 2rem;
-        border-radius: 25px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.9rem 2rem !important;
+        border-radius: 25px !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(226, 169, 241, 0.4) !important;
     }
     
     .stButton > button:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 25px rgba(226, 169, 241, 0.6) !important;
     }
     
-    /* Input Fields Styling */
+    /* Input Fields - Deep Plum borders */
     .stTextInput > div > div > input,
     .stSelectbox > div > div > div,
     .stTextArea > div > div > textarea {
-        background: rgba(255, 255, 255, 0.15) !important;
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        color: white !important;
-        border-radius: 10px !important;
-        font-size: 1rem !important;
-    }
-    
-    .stTextInput > div > div > input::placeholder,
-    .stTextArea > div > div > textarea::placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
-    }
-    
-    /* Labels */
-    label {
-        color: white !important;
-        font-weight: 500 !important;
+        background: white !important;
+        border: 2px solid #4A4459 !important;
+        color: #4A4459 !important;
+        border-radius: 12px !important;
         font-size: 1.05rem !important;
+        padding: 0.8rem !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > div:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #e2a9f1 !important;
+        box-shadow: 0 0 0 2px rgba(226, 169, 241, 0.2) !important;
+    }
+    
+    /* Labels - Deep Plum */
+    label {
+        color: #4A4459 !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
     }
     
     /* File Uploader */
     .stFileUploader {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
+        background: white;
+        border: 2px dashed #4A4459;
+        border-radius: 12px;
         padding: 1rem;
     }
     
-    .stFileUploader label {
-        color: white !important;
+    /* Divider */
+    hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #e2a9f1, transparent);
+        margin: 2rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Helper function to load images
-def load_image(image_path):
-    """Load and display image"""
-    try:
-        return Image.open(image_path)
-    except:
-        return None
-
-# Navigation Bar
-def render_navbar():
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        st.markdown("""
-        <div class="nav-left">
-            <img src="data:image/png;base64,{}" class="nav-logo-img" alt="Logo">
-            <span class="app-name">PawAlert</span>
-        </div>
-        """.format(get_image_base64("logo.png") if get_image_base64("logo.png") else ""), unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="nav-right">
-            <div class="nav-icon" title="Status">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="nav-icon" title="AI Assistant">
-                <i class="fas fa-robot"></i>
-            </div>
-            <img src="data:image/png;base64,{}" class="user-profile-img" alt="Profile">
-        </div>
-        """.format(get_image_base64("default.png") if get_image_base64("default.png") else ""), unsafe_allow_html=True)
-
-def get_image_base64(image_path):
-    """Convert image to base64 for embedding"""
-    try:
-        img = Image.open(image_path)
-        import io
-        buffered = io.BytesIO()
-        img.save(buffered, format="PNG")
-        return base64.b64encode(buffered.getvalue()).decode()
-    except:
-        return None
-
-# AI Chat Button (Floating)
-def render_ai_button():
-    st.markdown("""
-    <div class="ai-button-container">
-        <div class="ai-chat-button" onclick="document.getElementById('chat-trigger').click();">
-            <i class="fas fa-comments"></i>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
 # Groq API Setup
 def get_groq_client():
@@ -605,22 +545,38 @@ def generate_case_id():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     return f"PA{timestamp}"
 
+# AI Chat Button (Floating)
+def render_ai_button():
+    st.markdown("""
+    <div class="ai-button-container">
+        <div class="ai-chat-button" onclick="document.getElementById('chat-trigger').click();">
+            <i class="fas fa-robot"></i>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Home Page
 def render_home():
     st.markdown('<div class="hero-section">', unsafe_allow_html=True)
     
-    # Try to load and display main.png
-    main_img = load_image("main.png")
-    if main_img:
-        st.markdown('<div class="hero-image-container">', unsafe_allow_html=True)
-        st.image(main_img, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Check if main.png exists
+    if os.path.exists("main.png"):
+        try:
+            st.image("main.png", use_container_width=True)
+        except Exception as e:
+            st.markdown("""
+            <div style="text-align: center; padding: 100px; background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%); border-radius: 20px;">
+                <i class="fas fa-paw" style="font-size: 6rem; color: white; margin-bottom: 1rem;"></i>
+                <h2 style="color: white; font-size: 2.5rem; font-weight: 600;">Welcome to PawAlert</h2>
+                <p style="color: white; font-size: 1.3rem; opacity: 0.95; margin-top: 1rem;">Saving Lives, One Paw at a Time</p>
+            </div>
+            """, unsafe_allow_html=True)
     else:
         st.markdown("""
-        <div class="hero-image-container" style="background: rgba(255,255,255,0.1); padding: 100px; text-align: center; color: white;">
-            <i class="fas fa-paw" style="font-size: 5rem; margin-bottom: 1rem;"></i>
-            <h2 style="font-size: 2rem; font-weight: 500;">Welcome to PawAlert</h2>
-            <p style="font-size: 1.2rem; opacity: 0.9;">Saving Lives, One Paw at a Time</p>
+        <div style="text-align: center; padding: 100px; background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%); border-radius: 20px;">
+            <i class="fas fa-paw" style="font-size: 6rem; color: white; margin-bottom: 1rem;"></i>
+            <h2 style="color: white; font-size: 2.5rem; font-weight: 600;">Welcome to PawAlert</h2>
+            <p style="color: white; font-size: 1.3rem; opacity: 0.95; margin-top: 1rem;">Saving Lives, One Paw at a Time</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -640,7 +596,7 @@ def render_chat():
     if len(st.session_state.chat_messages) == 0:
         st.markdown('''
         <div class="chat-message assistant">
-            <i class="fas fa-paw"></i> Hello! I'm here to help you report an animal emergency.<br><br>
+            <i class="fas fa-paw"></i> <strong>Hello! I'm here to help you report an animal emergency.</strong><br><br>
             Please tell me:<br>
             1. <strong>Location</strong> where the animal is<br>
             2. <strong>What happened</strong> (injury or abuse)<br>
@@ -687,7 +643,8 @@ def render_chat():
                 issue_desc = st.text_area(
                     "📋 Description",
                     placeholder="Describe what happened and the animal's condition...",
-                    help="Please provide as much detail as possible"
+                    help="Please provide as much detail as possible",
+                    height=150
                 )
                 
                 uploaded_file = st.file_uploader(
@@ -742,6 +699,7 @@ def render_chat():
         
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
+            st.markdown('<style>.ambulance-btn-wrapper button { background: linear-gradient(135deg, #FFB4A2 0%, #FF9B87 100%) !important; }</style>', unsafe_allow_html=True)
             if st.button("🚑 DISPATCH AMBULANCE NOW", key="ambulance", use_container_width=True):
                 with st.spinner("🚨 Dispatching ambulance..."):
                     time.sleep(2)
@@ -761,7 +719,9 @@ def render_status():
     if len(st.session_state.cases) == 0:
         st.markdown('''
         <div class="no-cases-container">
-            <i class="fas fa-folder-open" style="font-size: 5rem; opacity: 0.7;"></i>
+            <div class="no-cases-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
             <p class="no-cases-text">No cases created yet.<br>Click the AI button to report an emergency.</p>
         </div>
         ''', unsafe_allow_html=True)
@@ -770,7 +730,7 @@ def render_status():
             st.markdown(f"""
             <div class="case-card">
                 <div class="case-id"><i class="fas fa-paw"></i> {case['case_id']}</div>
-                <div style="margin-top: 0.5rem; line-height: 1.8;">
+                <div style="margin-top: 0.5rem; line-height: 2;">
                     <strong><i class="fas fa-tag"></i> Type:</strong> {case['type']}<br>
                     <strong><i class="fas fa-dog"></i> Animal:</strong> {case['animal_type']}<br>
                     <strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {case['location']}<br>
@@ -784,45 +744,57 @@ def render_status():
 
 # Main App Logic
 def main():
-    # Navigation Bar with functional buttons
-    col_left, col_space, col_status, col_ai, col_profile = st.columns([3, 5, 1, 1, 1])
+    # Navigation Bar
+    st.markdown('<div class="navbar-container">', unsafe_allow_html=True)
     
-    with col_left:
-        logo_col, name_col = st.columns([1, 3])
+    nav_col1, nav_col2 = st.columns([2, 1])
+    
+    with nav_col1:
+        logo_col, name_col = st.columns([1, 4])
         with logo_col:
-            logo_img = load_image("logo.png")
-            if logo_img:
-                st.image(logo_img, width=50)
+            # Check if logo.png exists
+            if os.path.exists("logo.png"):
+                try:
+                    st.image("logo.png", width=80)
+                except:
+                    st.markdown('<div class="logo-container"><i class="fas fa-paw logo-icon"></i></div>', unsafe_allow_html=True)
             else:
-                st.markdown('<i class="fas fa-paw" style="font-size: 2.5rem; color: white;"></i>', unsafe_allow_html=True)
+                st.markdown('<div class="logo-container"><i class="fas fa-paw logo-icon"></i></div>', unsafe_allow_html=True)
+        
         with name_col:
             st.markdown('<div class="app-name">PawAlert</div>', unsafe_allow_html=True)
     
-    with col_status:
-        if st.button("", key="status_nav", help="View Status", use_container_width=True):
-            st.session_state.current_page = 'status'
-            st.session_state.show_chat = False
-            st.rerun()
-        st.markdown('<div style="text-align: center; margin-top: -45px;"><i class="fas fa-chart-line" style="font-size: 1.4rem; color: white;"></i></div>', unsafe_allow_html=True)
+    with nav_col2:
+        icon_col1, icon_col2, icon_col3 = st.columns(3)
+        
+        with icon_col1:
+            if st.button("", key="status_nav_btn", help="View Status"):
+                st.session_state.current_page = 'status'
+                st.session_state.show_chat = False
+                st.rerun()
+            st.markdown('<div style="margin-top: -50px; text-align: center;"><div class="nav-icon-btn"><i class="fas fa-chart-line"></i></div></div>', unsafe_allow_html=True)
+        
+        with icon_col2:
+            if st.button("", key="ai_nav_btn", help="AI Assistant"):
+                st.session_state.show_chat = True
+                st.session_state.current_page = 'chat'
+                st.rerun()
+            st.markdown('<div style="margin-top: -50px; text-align: center;"><div class="nav-icon-btn"><i class="fas fa-robot"></i></div></div>', unsafe_allow_html=True)
+        
+        with icon_col3:
+            # Check if default.png exists
+            if os.path.exists("default.png"):
+                try:
+                    st.image("default.png", width=55)
+                except:
+                    st.markdown('<div class="profile-container"><i class="fas fa-user-circle profile-icon"></i></div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="profile-container"><i class="fas fa-user-circle profile-icon"></i></div>', unsafe_allow_html=True)
     
-    with col_ai:
-        if st.button("", key="ai_nav", help="AI Assistant", use_container_width=True):
-            st.session_state.show_chat = True
-            st.session_state.current_page = 'chat'
-            st.rerun()
-        st.markdown('<div style="text-align: center; margin-top: -45px;"><i class="fas fa-robot" style="font-size: 1.4rem; color: white;"></i></div>', unsafe_allow_html=True)
-    
-    with col_profile:
-        profile_img = load_image("default.png")
-        if profile_img:
-            st.image(profile_img, width=45)
-        else:
-            st.markdown('<div style="text-align: center;"><i class="fas fa-user-circle" style="font-size: 2.5rem; color: white;"></i></div>', unsafe_allow_html=True)
-    
-    st.markdown("---")
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Hidden button for floating AI chat trigger
-    if st.button("Open Chat", key="chat-trigger", type="primary", help="Open AI Chat"):
+    if st.button("Open Chat", key="chat-trigger", help="Open AI Chat"):
         st.session_state.show_chat = True
         st.session_state.current_page = 'chat'
         st.rerun()
