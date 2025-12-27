@@ -107,6 +107,11 @@ st.markdown("""
     .body-container {
         text-align: center;
         padding: 50px 20px;
+        background-color: white;
+    }
+    
+    .main-img-container img {
+        background-color: transparent !important;
     }
     
     .hero-text {
@@ -157,6 +162,12 @@ st.markdown('<p class="subtitle">Report animal injuries and abuse to save lives<
 # Main Image
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image("main.png", use_container_width=True)
+    st.markdown('<div class="main-img-container">', unsafe_allow_html=True)
+    try:
+        st.image("main.png", use_container_width=True)
+    except Exception as e:
+        st.error(f"Cannot load main.png: {e}")
+        st.info("Make sure main.png is in the same folder as app.py")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
