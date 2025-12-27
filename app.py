@@ -4,6 +4,7 @@ import json
 import random
 from datetime import datetime
 import requests
+from streamlit.components.v1 import html
 
 # Page config
 st.set_page_config(
@@ -19,6 +20,8 @@ if 'cases' not in st.session_state:
     st.session_state.cases = []
 if 'show_status' not in st.session_state:
     st.session_state.show_status = False
+if 'icon_clicked' not in st.session_state:
+    st.session_state.icon_clicked = None
 
 # Function to call Groq API directly
 def call_groq_api(prompt):
@@ -69,6 +72,14 @@ HOSPITALS = [
     {"name": "Advanced Pet Medical Center", "location": "East Side, 4.5 km", "speciality": "Critical Care", "availability": "24/7", "price": "₹800-3000"},
     {"name": "Green Valley Animal Hospital", "location": "West End, 5.2 km", "speciality": "Wildlife & Exotic", "availability": "8 AM - 8 PM", "price": "₹600-2500"},
     {"name": "Compassion Vet Clinic", "location": "South Area, 3.8 km", "speciality": "Emergency Care", "availability": "24/7", "price": "₹400-1800"},
+]
+
+# Ambulance drivers
+DRIVERS = [
+    {"name": "Rajesh Kumar", "contact": "+91-9876543210"},
+    {"name": "Amit Sharma", "contact": "+91-9876543211"},
+    {"name": "Vikram Singh", "contact": "+91-9876543212"},
+    {"name": "Suresh Patel", "contact": "+91-9876543213"},
 ]
 
 def analyze_injury_with_groq(animal_type, description, location):
@@ -313,9 +324,13 @@ st.markdown("""
         color: #084298;
     }
     
-    .status-resolved {
-        background: #d1e7dd;
-        color: #0f5132;
+    .ambulance-popup {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        padding: 30px;
+        border-radius: 15px;
+        border-left: 6px solid #28a745;
+        margin: 20px 0;
+        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
     }
     
     .stTextInput > div > div > input {
@@ -330,10 +345,6 @@ st.markdown("""
         border: 2px solid #e2a9f1;
         padding: 12px;
         font-size: 16px;
-    }
-    
-    .stSelectbox > div > div {
-        border-radius: 10px;
     }
     
     .stButton > button {
@@ -353,104 +364,96 @@ st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 """, unsafe_allow_html=True)
 
-# Navigation Bar
+# Navigation Bar with clickable Font Awesome icons
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo" class="logo-img">' if logo_base64 else '<div style="width:60px;height:60px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;">🐾</div>'
 profile_html = f'<img src="data:image/png;base64,{default_base64}" alt="Profile" class="profile-img">' if default_base64 else '<div style="width:50px;height:50px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>'
 
-st.markdown(f"""
-    <div class="nav-container">
-        <div class="nav-left">
-            {logo_html}
-            <div class="brand-name">PawAlert</div>
-        </div>
-        <div class="nav-right" id="nav-icons">
-            <i class="fas fa-chart-line nav-icon" title="Status" id="status-icon"></i>
-            <i class="fas fa-robot nav-icon" title="AI Assistant" id="ai-icon"></i>
-            {profile_html}
-        </div>
+# Clickable navigation component
+nav_html = f"""
+<div class="nav-container">
+    <div class="nav-left">
+        {logo_html}
+        <div class="brand-name">PawAlert</div>
     </div>
-""", unsafe_allow_html=True)
+    <div class="nav-right">
+        <i class="fas fa-chart-line nav-icon" title="Status" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', key: 'nav_click', value: 'status'}}, '*')"></i>
+        <i class="fas fa-robot nav-icon" title="AI Assistant" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', key: 'nav_click', value: 'ai'}}, '*')"></i>
+        {profile_html}
+    </div>
+</div>
+"""
 
-# JavaScript for icon clicks
-st.markdown("""
-<script>
-    const statusIcon = parent.document.getElementById('status-icon');
-    const aiIcon = parent.document.getElementById('ai-icon');
-    
-    if (statusIcon) {
-        statusIcon.onclick = function() {
-            window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'status_clicked', value: true}, '*');
-        };
-    }
-    
-    if (aiIcon) {
-        aiIcon.onclick = function() {
-            window.parent.postMessage({type: 'streamlit:setComponentValue', key: 'ai_clicked', value: true}, '*');
-        };
-    }
-</script>
-""", unsafe_allow_html=True)
+html(nav_html, height=120)
 
-# Create invisible buttons
+# Check query params for navigation
+query_params = st.query_params
+if 'view' in query_params:
+    view = query_params['view']
+    if view == 'status':
+        st.session_state.show_status = True
+        st.session_state.show_chatbot = False
+    elif view == 'ai':
+        st.session_state.show_chatbot = True
+        st.session_state.show_status = False
+
+# Create buttons for navigation
 col1, col2 = st.columns(2)
 with col1:
-    status_btn = st.button("Status", key="status_btn", use_container_width=True)
+    if st.button("📊 Status", key="status_nav"):
+        st.session_state.show_status = not st.session_state.show_status
+        st.session_state.show_chatbot = False
+        st.rerun()
+
 with col2:
-    ai_btn = st.button("AI", key="ai_btn", use_container_width=True)
-
-if status_btn:
-    st.session_state.show_status = not st.session_state.show_status
-    st.session_state.show_chatbot = False
-    st.rerun()
-
-if ai_btn:
-    st.session_state.show_chatbot = not st.session_state.show_chatbot
-    st.session_state.show_status = False
-    st.rerun()
+    if st.button("🤖 AI Assistant", key="ai_nav"):
+        st.session_state.show_chatbot = not st.session_state.show_chatbot
+        st.session_state.show_status = False
+        st.rerun()
 
 # Status Panel
 if st.session_state.show_status:
     st.markdown("---")
-    st.markdown("### <i class='fas fa-chart-bar' style='color: #e2a9f1;'></i> Case Status Dashboard", unsafe_allow_html=True)
+    st.markdown("## 📊 Case Status Dashboard")
     
     if len(st.session_state.cases) == 0:
         st.info("🔍 No cases filed yet. Use AI Sathi to report incidents.")
     else:
         for idx, case in enumerate(st.session_state.cases):
-            with st.expander(f"<i class='fas fa-folder'></i> Case {idx + 1}: {case.get('case_title', 'Case Details')}", expanded=False):
+            with st.expander(f"📋 Case {idx + 1}: {case.get('case_title', 'Case Details')}", expanded=False):
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown(f"**<i class='fas fa-id-card'></i> Case ID:** {case['case_id']}", unsafe_allow_html=True)
-                    st.markdown(f"**<i class='fas fa-calendar'></i> Date:** {case['date']}", unsafe_allow_html=True)
-                    st.markdown(f"**<i class='fas fa-map-marker-alt'></i> Location:** {case['location']}", unsafe_allow_html=True)
+                    st.markdown(f"**🆔 Case ID:** {case['case_id']}")
+                    st.markdown(f"**📅 Date:** {case['date']}")
+                    st.markdown(f"**📍 Location:** {case['location']}")
                 with col2:
                     st.markdown(f'<span class="status-badge status-reported">{case["status"]}</span>', unsafe_allow_html=True)
                 
                 st.markdown("---")
                 st.markdown(f"**Complaint:** {case.get('formal_complaint', 'N/A')}")
                 st.markdown(f"**Recommended Action:** {case.get('recommended_action', 'N/A')}")
-                st.markdown(f"**<i class='fas fa-exclamation-circle'></i> Urgency:** {case.get('urgency_level', 'N/A')}", unsafe_allow_html=True)
+                st.markdown(f"**⚠️ Urgency:** {case.get('urgency_level', 'N/A')}")
                 
-                if st.button(f"<i class='fas fa-shield-alt'></i> Inform Police", key=f"police_{idx}", type="primary"):
+                if st.button(f"🚔 Inform Police", key=f"police_{idx}", type="primary"):
                     st.success("✅ Police have been notified! Case forwarded to authorities.")
                     st.session_state.cases[idx]['status'] = 'Under Investigation'
+                    st.rerun()
 
 # AI Chatbot Panel
-if st.session_state.show_chatbot:
+elif st.session_state.show_chatbot:
     st.markdown("---")
     st.markdown('<div class="chatbot-container">', unsafe_allow_html=True)
     
     st.markdown("""
         <div class="welcome-box">
-            <h2 style="color: #e2a9f1; margin: 0;"><i class="fas fa-robot"></i> Hello! Welcome</h2>
-            <p style="color: #666; margin: 10px 0 0 0; font-size: 18px;">I am your <strong>AI Sathi</strong>, here to help rescue and protect animals in need. 
+            <h2 style="color: #e2a9f1; margin: 0;">🤖 Hello! Welcome</h2>
+            <p style="color: #333; margin: 10px 0 0 0; font-size: 18px;">I am your <strong>AI Sathi</strong>, here to help rescue and protect animals in need. 
             Report injuries or file abuse complaints, and I'll assist you immediately!</p>
         </div>
     """, unsafe_allow_html=True)
     
     inquiry_type = st.radio(
-        "**<i class='fas fa-clipboard-list' style='color: #e2a9f1;'></i> Select Inquiry Type:**",
-        ["<i class='fas fa-hospital'></i> Animal Injury", "<i class='fas fa-exclamation-triangle'></i> Animal Abuse"],
+        "**📋 Select Inquiry Type:**",
+        ["🏥 Animal Injury", "⚠️ Animal Abuse"],
         horizontal=True
     )
     
@@ -458,24 +461,24 @@ if st.session_state.show_chatbot:
     
     if "Injury" in inquiry_type:
         st.markdown('<div class="form-section">', unsafe_allow_html=True)
-        st.markdown("### <i class='fas fa-hospital' style='color: #e2a9f1;'></i> Report Animal Injury", unsafe_allow_html=True)
+        st.markdown("### 🏥 Report Animal Injury")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            animal_type = st.text_input("<i class='fas fa-paw'></i> Animal Type", placeholder="e.g., Dog, Cat, Bird...", key="animal_type")
+            animal_type = st.text_input("🐾 Animal Type", placeholder="e.g., Dog, Cat, Bird...")
             location = st.selectbox(
-                "<i class='fas fa-map-marker-alt'></i> Location",
+                "📍 Location",
                 ["Current Location (GPS)", "Sector 12, Nearby Park", "Main Road, City Center", "Industrial Area, Zone 5"]
             )
         
         with col2:
-            description = st.text_area("<i class='fas fa-file-alt'></i> Description", placeholder="Describe the injury in detail...", height=100)
-            media_file = st.file_uploader("<i class='fas fa-camera'></i> Upload Image/Video (Optional)", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
+            description = st.text_area("📋 Description", placeholder="Describe the injury in detail...", height=100)
+            media_file = st.file_uploader("📸 Upload Image/Video (Optional)", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
         
         st.markdown('</div>', unsafe_allow_html=True)
         
-        if st.button("<i class='fas fa-search'></i> Analyze Injury", type="primary", use_container_width=True, key="analyze_btn"):
+        if st.button("🔍 Analyze Injury", type="primary", use_container_width=True):
             if animal_type and description:
                 with st.spinner("🤖 AI Sathi is analyzing..."):
                     analysis = analyze_injury_with_groq(animal_type, description, location)
@@ -485,61 +488,74 @@ if st.session_state.show_chatbot:
                         
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.markdown(f"**<i class='fas fa-paw'></i> Animal:** {analysis.get('animal_confirmed', animal_type)}")
-                            st.markdown(f"**<i class='fas fa-chart-bar'></i> Severity:** `{analysis.get('severity', 'Unknown')}`")
+                            st.markdown(f"**🐾 Animal:** {analysis.get('animal_confirmed', animal_type)}")
+                            st.markdown(f"**📊 Severity:** `{analysis.get('severity', 'Unknown')}`")
                         with col2:
-                            st.markdown(f"**<i class='fas fa-info-circle'></i> What Happened:** {analysis.get('injury_analysis', 'Analysis in progress')}")
+                            st.markdown(f"**🔍 What Happened:** {analysis.get('injury_analysis', 'Analysis in progress')}")
                         
-                        st.markdown("### <i class='fas fa-lightbulb' style='color: #e2a9f1;'></i> Immediate Suggestions:")
+                        st.markdown("### 💡 Immediate Suggestions:")
                         suggestions = analysis.get('immediate_suggestions', [])
                         for i, sug in enumerate(suggestions, 1):
                             st.markdown(f"{i}. {sug}")
                         
                         st.markdown("---")
-                        st.markdown("### <i class='fas fa-hospital-alt' style='color: #e2a9f1;'></i> Recommended Veterinary Hospitals", unsafe_allow_html=True)
+                        st.markdown("### 🏥 Recommended Veterinary Hospitals")
                         
                         selected_hospitals = random.sample(HOSPITALS, 3)
                         
-                        for hospital in selected_hospitals:
+                        for idx, hospital in enumerate(selected_hospitals):
                             st.markdown(f"""
                                 <div class="hospital-card">
-                                    <h4 style="color: #e2a9f1; margin: 0 0 15px 0;"><i class="fas fa-hospital"></i> {hospital['name']}</h4>
-                                    <p style="margin: 8px 0;"><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {hospital['location']}</p>
-                                    <p style="margin: 8px 0;"><strong><i class="fas fa-stethoscope"></i> Speciality:</strong> {hospital['speciality']}</p>
-                                    <p style="margin: 8px 0;"><strong><i class="fas fa-clock"></i> Availability:</strong> {hospital['availability']}</p>
-                                    <p style="margin: 8px 0;"><strong><i class="fas fa-rupee-sign"></i> Price Range:</strong> {hospital['price']}</p>
+                                    <h4 style="color: #e2a9f1; margin: 0 0 15px 0;">🏥 {hospital['name']}</h4>
+                                    <p style="margin: 8px 0; color: #333;"><strong>📍 Location:</strong> {hospital['location']}</p>
+                                    <p style="margin: 8px 0; color: #333;"><strong>⚕️ Speciality:</strong> {hospital['speciality']}</p>
+                                    <p style="margin: 8px 0; color: #333;"><strong>🕐 Availability:</strong> {hospital['availability']}</p>
+                                    <p style="margin: 8px 0; color: #333;"><strong>💰 Price Range:</strong> {hospital['price']}</p>
                                 </div>
                             """, unsafe_allow_html=True)
                             
-                            if st.button(f"<i class='fas fa-ambulance'></i> Call Ambulance - {hospital['name']}", key=f"ambulance_{hospital['name']}", type="secondary"):
-                                st.success(f"🚑 Ambulance dispatched from {hospital['name']}! ETA: 15-20 minutes")
+                            if st.button(f"🚑 Call Ambulance", key=f"ambulance_{idx}", type="secondary"):
+                                driver = random.choice(DRIVERS)
+                                eta = random.choice(["15-20 minutes", "10-15 minutes", "20-25 minutes"])
+                                
+                                st.markdown(f"""
+                                    <div class="ambulance-popup">
+                                        <h3 style="color: #28a745; margin: 0 0 15px 0;">🚑 Ambulance Dispatched Successfully!</h3>
+                                        <p style="margin: 8px 0; color: #155724;"><strong>🏥 Hospital:</strong> {hospital['name']}</p>
+                                        <p style="margin: 8px 0; color: #155724;"><strong>🚗 Driver:</strong> {driver['name']}</p>
+                                        <p style="margin: 8px 0; color: #155724;"><strong>📞 Contact:</strong> {driver['contact']}</p>
+                                        <p style="margin: 8px 0; color: #155724;"><strong>⏱️ ETA:</strong> {eta}</p>
+                                        <p style="margin: 15px 0 0 0; color: #155724; font-weight: 600;">The driver will contact you shortly!</p>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                st.balloons()
             else:
                 st.warning("⚠️ Please fill in all required fields!")
     
     else:
         st.markdown('<div class="form-section">', unsafe_allow_html=True)
-        st.markdown("### <i class='fas fa-exclamation-triangle' style='color: #e2a9f1;'></i> File Animal Abuse Complaint", unsafe_allow_html=True)
+        st.markdown("### ⚠️ File Animal Abuse Complaint")
         
         col1, col2 = st.columns(2)
         
         with col1:
             abuse_type = st.selectbox(
-                "<i class='fas fa-list'></i> Type of Abuse",
+                "📝 Type of Abuse",
                 ["Physical Abuse", "Neglect", "Abandonment", "Illegal Trade", "Cruelty", "Other"]
             )
             location_abuse = st.selectbox(
-                "<i class='fas fa-map-marker-alt'></i> Location",
+                "📍 Location",
                 ["Current Location (GPS)", "Sector 12, Nearby Park", "Main Road, City Center", "Industrial Area, Zone 5"],
                 key="location_abuse"
             )
         
         with col2:
-            description_abuse = st.text_area("<i class='fas fa-file-alt'></i> Detailed Description", placeholder="Describe the incident in detail...", height=100, key="desc_abuse")
-            abuse_media = st.file_uploader("<i class='fas fa-camera'></i> Upload Evidence (Optional)", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
+            description_abuse = st.text_area("📋 Detailed Description", placeholder="Describe the incident in detail...", height=100, key="desc_abuse")
+            abuse_media = st.file_uploader("📸 Upload Evidence (Optional)", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
         
         st.markdown('</div>', unsafe_allow_html=True)
         
-        if st.button("<i class='fas fa-file-signature'></i> File Complaint", type="primary", use_container_width=True, key="file_complaint_btn"):
+        if st.button("📝 File Complaint", type="primary", use_container_width=True):
             if abuse_type and description_abuse:
                 with st.spinner("🤖 AI Sathi is preparing your complaint..."):
                     case = generate_abuse_case(abuse_type, location_abuse, description_abuse)
@@ -551,18 +567,18 @@ if st.session_state.show_chatbot:
                         
                         st.markdown(f"""
                             <div class="case-card">
-                                <h3 style="color: #e2a9f1; margin: 0 0 20px 0;"><i class="fas fa-file-alt"></i> {case['case_title']}</h3>
-                                <p style="margin: 10px 0;"><strong><i class="fas fa-id-card"></i> Case ID:</strong> {case['case_id']}</p>
-                                <p style="margin: 10px 0;"><strong><i class="fas fa-calendar"></i> Date:</strong> {case['date']}</p>
-                                <p style="margin: 10px 0;"><strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {case['location']}</p>
-                                <p style="margin: 10px 0;"><strong><i class="fas fa-exclamation-circle"></i> Urgency:</strong> <span style="color: #d32f2f; font-weight: 700;">{case['urgency_level']}</span></p>
+                                <h3 style="color: #e2a9f1; margin: 0 0 20px 0;">📋 {case['case_title']}</h3>
+                                <p style="margin: 10px 0; color: #333;"><strong>🆔 Case ID:</strong> {case['case_id']}</p>
+                                <p style="margin: 10px 0; color: #333;"><strong>📅 Date:</strong> {case['date']}</p>
+                                <p style="margin: 10px 0; color: #333;"><strong>📍 Location:</strong> {case['location']}</p>
+                                <p style="margin: 10px 0; color: #333;"><strong>⚠️ Urgency:</strong> <span style="color: #d32f2f; font-weight: 700;">{case['urgency_level']}</span></p>
                                 <hr style="margin: 20px 0;">
-                                <p style="margin: 10px 0;"><strong>Complaint:</strong> {case['formal_complaint']}</p>
-                                <p style="margin: 10px 0;"><strong>Recommended Action:</strong> {case['recommended_action']}</p>
+                                <p style="margin: 10px 0; color: #333;"><strong>Complaint:</strong> {case['formal_complaint']}</p>
+                                <p style="margin: 10px 0; color: #333;"><strong>Recommended Action:</strong> {case['recommended_action']}</p>
                             </div>
                         """, unsafe_allow_html=True)
                         
-                        if st.button("<i class='fas fa-shield-alt'></i> Inform Police Now", key="inform_police_main", type="primary"):
+                        if st.button("🚔 Inform Police Now", key="inform_police_main", type="primary"):
                             st.success("✅ Police have been notified! Authorities will investigate the case.")
                             st.balloons()
             else:
@@ -571,7 +587,7 @@ if st.session_state.show_chatbot:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Main Body
-if not st.session_state.show_chatbot and not st.session_state.show_status:
+else:
     st.markdown('<div class="body-container">', unsafe_allow_html=True)
     
     st.markdown('<h1 class="hero-text">Rescue & Protect Animals in Need</h1>', unsafe_allow_html=True)
@@ -585,8 +601,8 @@ if not st.session_state.show_chatbot and not st.session_state.show_status:
             st.markdown("""
                 <div style="background: linear-gradient(135deg, #e2a9f1 0%, #d896ea 100%); 
                             padding: 100px; border-radius: 20px; text-align: center;">
-                    <h2 style="color: white; font-size: 64px;"><i class="fas fa-paw"></i></h2>
-                    <p style="color: white; font-size: 20px; margin-top: 20px;">Click the <i class="fas fa-robot"></i> AI Assistant to get started!</p>
+                    <h2 style="color: white; font-size: 64px;">🐾</h2>
+                    <p style="color: white; font-size: 20px; margin-top: 20px;">Click the AI Assistant button above to get started!</p>
                 </div>
             """, unsafe_allow_html=True)
     
