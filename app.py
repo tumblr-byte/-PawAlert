@@ -7,17 +7,28 @@ import os
 
 # Page config
 st.set_page_config(
-    page_title="Animal Welfare & Rescue",
+    page_title="PawAlert - Animal Welfare & Rescue",
     page_icon="🐾",
     layout="wide"
 )
 
 # Initialize Groq client from secrets
 try:
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    # Try to get from Streamlit secrets
+    if "GROQ_API_KEY" in st.secrets:
+        GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    else:
+        # Fallback to environment variable
+        GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+        if not GROQ_API_KEY:
+            st.error("⚠️ GROQ_API_KEY not found in secrets or environment variables!")
+            st.info("Please add GROQ_API_KEY to your Streamlit secrets or set it as an environment variable.")
+            st.stop()
+    
     client = Groq(api_key=GROQ_API_KEY)
 except Exception as e:
-    st.error("⚠️ Please add GROQ_API_KEY to your Streamlit secrets!")
+    st.error(f"⚠️ Error initializing Groq client: {str(e)}")
+    st.info("Please check your GROQ_API_KEY in Streamlit secrets.")
     st.stop()
 
 # Custom CSS with theme color
@@ -222,15 +233,15 @@ def show_header():
         st.markdown(f"""
         <div class="header-container">
             <img src="data:image/png;base64,{logo_data}" width="120" style="margin-bottom: 15px; border-radius: 50%;">
-            <h1 style="margin: 10px 0; color: #4a0e4e;"><i class="fas fa-paw"></i> Animal Welfare & Rescue</h1>
-            <p style="color: #6b1e6f; font-size: 18px;">Protecting and caring for animals in need</p>
+            <h1 style="margin: 10px 0; color: #4a0e4e;"><i class="fas fa-paw"></i> PawAlert</h1>
+            <p style="color: #6b1e6f; font-size: 18px;">Animal Welfare & Rescue Platform</p>
         </div>
         """, unsafe_allow_html=True)
     except:
         st.markdown("""
         <div class="header-container">
-            <h1 style="margin: 10px 0; color: #4a0e4e;"><i class="fas fa-paw"></i> Animal Welfare & Rescue</h1>
-            <p style="color: #6b1e6f; font-size: 18px;">Protecting and caring for animals in need</p>
+            <h1 style="margin: 10px 0; color: #4a0e4e;"><i class="fas fa-paw"></i> PawAlert</h1>
+            <p style="color: #6b1e6f; font-size: 18px;">Animal Welfare & Rescue Platform</p>
         </div>
         """, unsafe_allow_html=True)
 
