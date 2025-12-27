@@ -126,20 +126,33 @@ st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 """, unsafe_allow_html=True)
 
-# Navigation Bar
-st.markdown("""
+# Navigation Bar with images
+col_left, col_mid, col_right = st.columns([2, 6, 2])
+
+with col_left:
+    try:
+        st.image("logo.png", width=50)
+    except:
+        st.write("🐾")
+
+with col_mid:
+    st.markdown("""
     <div class="nav-container">
         <div class="nav-left">
-            <img src="app/logo.png" alt="Logo" class="logo-img">
             <div class="brand-name">PawAlert</div>
         </div>
         <div class="nav-right">
             <i class="fas fa-chart-line nav-icon" title="Status"></i>
             <i class="fas fa-robot nav-icon" title="AI Assistant"></i>
-            <img src="app/default.png" alt="Profile" class="profile-img">
         </div>
     </div>
 """, unsafe_allow_html=True)
+
+with col_right:
+    try:
+        st.image("default.png", width=40)
+    except:
+        st.write("👤")
 
 # Body Section
 st.markdown('<div class="body-container">', unsafe_allow_html=True)
