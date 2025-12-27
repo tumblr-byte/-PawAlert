@@ -3,7 +3,6 @@ import base64
 import json
 import random
 from datetime import datetime
-from groq import Groq
 
 # Page config
 st.set_page_config(
@@ -21,12 +20,14 @@ if 'show_status' not in st.session_state:
     st.session_state.show_status = False
 
 # Initialize Groq client
+client = None
 try:
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+    from groq import Groq
+    api_key = st.secrets.get("GROQ_API_KEY", None)
+    if api_key:
+        client = Groq(api_key=api_key)
 except Exception as e:
-    st.error(f"⚠️ Groq API Error: {e}")
-    st.info("Make sure GROQ_API_KEY is set in Streamlit secrets (Settings → Secrets)")
-    client = None
+    st.warning(f"Groq API not initialized: {str(e)}")
 
 # Function to convert image to base64
 def get_base64_image(image_path):
@@ -52,6 +53,7 @@ HOSPITALS = [
 def analyze_injury_with_groq(animal_type, description, location):
     """Analyze injury using Groq AI"""
     if not client:
+        st.error("Groq API not available. Please check your API key in Streamlit secrets.")
         return None
     
     prompt = f"""You are a veterinary AI assistant. Analyze this animal injury case:
@@ -89,6 +91,7 @@ Format as valid JSON only."""
 def generate_abuse_case(abuse_type, location, description):
     """Generate abuse case with Groq AI"""
     if not client:
+        st.error("Groq API not available. Please check your API key in Streamlit secrets.")
         return None
     
     case_id = f"PA-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
@@ -295,62 +298,75 @@ st.markdown("""
         background: #d1e7dd;
         color: #0f5132;
     }
-    
-    /* Hide default streamlit buttons */
-    .stButton button {
-        display: none;
-    }
     </style>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 """, unsafe_allow_html=True)
 
-# JavaScript for handling icon clicks
-st.markdown("""
-    <script>
-    function handleStatusClick() {
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'status'}, '*');
-    }
-    function handleAIClick() {
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'ai'}, '*');
-    }
-    </script>
-""", unsafe_allow_html=True)
-
-# Navigation Bar with icons inside
+# Navigation Bar with embedded images
 logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo" class="logo-img">' if logo_base64 else '<div style="width:60px;height:60px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;">🐾</div>'
 profile_html = f'<img src="data:image/png;base64,{default_base64}" alt="Profile" class="profile-img">' if default_base64 else '<div style="width:50px;height:50px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>'
 
-# Create clickable navigation
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+# Create columns for icon buttons
+col1, col2, col3 = st.columns([6, 1, 1])
 
 with col1:
-    status_clicked = st.button("status_icon", key="status_btn", label_visibility="hidden")
+    st.markdown(f"""
+        <div class="nav-container">
+            <div class="nav-left">
+                {logo_html}
+                <div class="brand-name">PawAlert</div>
+            </div>
+            <div class="nav-right">
+                <i class="fas fa-chart-line nav-icon" title="Status" id="status-icon"></i>
+                <i class="fas fa-robot nav-icon" title="AI Assistant" id="ai-icon"></i>
+                {profile_html}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
 with col2:
-    ai_clicked = st.button("ai_icon", key="ai_btn", label_visibility="hidden")
+    if st.button("📊", key="status_button"):
+        st.session_state.show_status = not st.session_state.show_status
+        st.session_state.show_chatbot = False
+        st.rerun()
 
-if status_clicked:
-    st.session_state.show_status = not st.session_state.show_status
-    st.session_state.show_chatbot = False
-    st.rerun()
+with col3:
+    if st.button("🤖", key="ai_button"):
+        st.session_state.show_chatbot = not st.session_state.show_chatbot
+        st.session_state.show_status = False
+        st.rerun()
 
-if ai_clicked:
-    st.session_state.show_chatbot = not st.session_state.show_chatbot
-    st.session_state.show_status = False
-    st.rerun()
-
-st.markdown(f"""
-    <div class="nav-container">
-        <div class="nav-left">
-            {logo_html}
-            <div class="brand-name">PawAlert</div>
-        </div>
-        <div class="nav-right">
-            <i class="fas fa-chart-line nav-icon" title="Status" onclick="document.querySelector('[data-testid=stButton]:nth-of-type(1) button').click()"></i>
-            <i class="fas fa-robot nav-icon" title="AI Assistant" onclick="document.querySelector('[data-testid=stButton]:nth-of-type(2) button').click()"></i>
-            {profile_html}
-        </div>
-    </div>
+# Add JavaScript to link icon clicks to buttons
+st.markdown("""
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusIcon = document.getElementById('status-icon');
+        const aiIcon = document.getElementById('ai-icon');
+        
+        if (statusIcon) {
+            statusIcon.addEventListener('click', function() {
+                const buttons = window.parent.document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes('📊')) {
+                        btn.click();
+                    }
+                });
+            });
+        }
+        
+        if (aiIcon) {
+            aiIcon.addEventListener('click', function() {
+                const buttons = window.parent.document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes('🤖')) {
+                        btn.click();
+                    }
+                });
+            });
+        }
+    });
+    </script>
 """, unsafe_allow_html=True)
 
 # Status Panel
@@ -364,16 +380,16 @@ if st.session_state.show_status:
             with st.expander(f"📋 Case {idx + 1}: {case.get('case_title', 'Case Details')}", expanded=False):
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    st.markdown(f"**Case ID:** {case['case_id']}")
-                    st.markdown(f"**Date:** {case['date']}")
-                    st.markdown(f"**Location:** {case['location']}")
+                    st.markdown(f"**<i class='fas fa-id-card'></i> Case ID:** {case['case_id']}", unsafe_allow_html=True)
+                    st.markdown(f"**<i class='fas fa-calendar'></i> Date:** {case['date']}", unsafe_allow_html=True)
+                    st.markdown(f"**<i class='fas fa-map-marker-alt'></i> Location:** {case['location']}", unsafe_allow_html=True)
                 with col2:
                     st.markdown(f'<span class="status-badge status-reported">{case["status"]}</span>', unsafe_allow_html=True)
                 
                 st.markdown("---")
                 st.markdown(f"**Complaint:** {case.get('formal_complaint', 'N/A')}")
                 st.markdown(f"**Recommended Action:** {case.get('recommended_action', 'N/A')}")
-                st.markdown(f"**Urgency:** {case.get('urgency_level', 'N/A')}")
+                st.markdown(f"**<i class='fas fa-exclamation-circle'></i> Urgency:** {case.get('urgency_level', 'N/A')}", unsafe_allow_html=True)
                 
                 if st.button(f"🚔 Inform Police", key=f"police_{idx}"):
                     st.success("✅ Police have been notified! Case forwarded to authorities.")
@@ -394,14 +410,13 @@ if st.session_state.show_chatbot:
     # Inquiry Type Selection
     inquiry_type = st.radio(
         "**Select Inquiry Type:**",
-        ["<i class='fas fa-hospital'></i> Animal Injury", "<i class='fas fa-exclamation-triangle'></i> Animal Abuse"],
-        horizontal=True,
-        format_func=lambda x: x
+        ["Animal Injury", "Animal Abuse"],
+        horizontal=True
     )
     
     st.markdown("---")
     
-    if "Injury" in inquiry_type:
+    if inquiry_type == "Animal Injury":
         st.markdown("### <i class='fas fa-hospital'></i> Report Animal Injury", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
