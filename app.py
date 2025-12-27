@@ -166,23 +166,3 @@ with col2:
         """, unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
-```
-
-This code creates a beautiful PawAlert home page with:
-
-**Features:**
-- ✨ Purple gradient theme using your color `#e2a9f1`
-- 🎨 Roboto font throughout
-- 📱 Responsive navigation bar with logo (50x50px), brand name, and icons
-- 🖼️ Centered main.png image with hover effect
-- 🎯 Font Awesome icons for status and robot
-- 👤 Profile picture (default.png) in nav
-- 💫 Smooth animations and shadows
-
-**File Structure Expected:**
-```
-your_project/
-├── app.py
-├── logo.png
-├── default.png
-└── main.png
