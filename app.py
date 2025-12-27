@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 
 # Page config
 st.set_page_config(
@@ -6,6 +7,18 @@ st.set_page_config(
     page_icon="🐾",
     layout="wide"
 )
+
+# Function to convert image to base64
+def get_base64_image(image_path):
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except:
+        return None
+
+# Get base64 images
+logo_base64 = get_base64_image("logo.png")
+default_base64 = get_base64_image("default.png")
 
 # Custom CSS
 st.markdown("""
@@ -29,7 +42,7 @@ st.markdown("""
     /* Custom Navigation Bar */
     .nav-container {
         background: linear-gradient(135deg, #e2a9f1 0%, #d896ea 100%);
-        padding: 15px 40px;
+        padding: 20px 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -41,12 +54,12 @@ st.markdown("""
     .nav-left {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 20px;
     }
     
     .logo-img {
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         object-fit: cover;
         border: 3px solid white;
@@ -54,7 +67,7 @@ st.markdown("""
     
     .brand-name {
         color: white;
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 700;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
@@ -62,12 +75,12 @@ st.markdown("""
     .nav-right {
         display: flex;
         align-items: center;
-        gap: 25px;
+        gap: 30px;
     }
     
     .nav-icon {
         color: white;
-        font-size: 24px;
+        font-size: 28px;
         transition: transform 0.3s ease;
         cursor: pointer;
     }
@@ -77,11 +90,11 @@ st.markdown("""
     }
     
     .profile-img {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid white;
+        border: 3px solid white;
         cursor: pointer;
         transition: transform 0.3s ease;
     }
@@ -94,21 +107,6 @@ st.markdown("""
     .body-container {
         text-align: center;
         padding: 50px 20px;
-    }
-    
-    .main-image {
-        max-width: 800px;
-        width: 100%;
-        height: auto;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(226, 169, 241, 0.3);
-        margin: 30px auto;
-        display: block;
-        transition: transform 0.3s ease;
-    }
-    
-    .main-image:hover {
-        transform: scale(1.02);
     }
     
     .hero-text {
@@ -131,36 +129,23 @@ st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 """, unsafe_allow_html=True)
 
-# Navigation Bar with images
-st.markdown("""
+# Navigation Bar with embedded images
+logo_html = f'<img src="data:image/png;base64,{logo_base64}" alt="Logo" class="logo-img">' if logo_base64 else '<div style="width:60px;height:60px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;">🐾</div>'
+profile_html = f'<img src="data:image/png;base64,{default_base64}" alt="Profile" class="profile-img">' if default_base64 else '<div style="width:50px;height:50px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>'
+
+st.markdown(f"""
     <div class="nav-container">
         <div class="nav-left">
+            {logo_html}
             <div class="brand-name">PawAlert</div>
         </div>
         <div class="nav-right">
             <i class="fas fa-chart-line nav-icon" title="Status"></i>
             <i class="fas fa-robot nav-icon" title="AI Assistant"></i>
+            {profile_html}
         </div>
     </div>
 """, unsafe_allow_html=True)
-
-# Add logo and profile with absolute positioning
-col1, col2, col3 = st.columns([1, 8, 1])
-with col1:
-    st.markdown('<div style="margin-top: -80px;">', unsafe_allow_html=True)
-    try:
-        st.image("logo.png", width=60)
-    except:
-        pass
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col3:
-    st.markdown('<div style="margin-top: -80px;">', unsafe_allow_html=True)
-    try:
-        st.image("default.png", width=50)
-    except:
-        pass
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Body Section
 st.markdown('<div class="body-container">', unsafe_allow_html=True)
