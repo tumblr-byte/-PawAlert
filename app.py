@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 import time
 import base64
+from PIL import Image
 
 # Page config
 st.set_page_config(
@@ -25,9 +26,10 @@ if 'chat_messages' not in st.session_state:
 if 'report_submitted' not in st.session_state:
     st.session_state.report_submitted = False
 
-# Custom CSS
+# Custom CSS with Glassmorphism
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
     
     /* Hide streamlit elements */
@@ -36,101 +38,132 @@ st.markdown("""
     header {visibility: hidden;}
     .stDeployButton {display:none;}
     
-    /* Main background */
-    .stApp {
-        background-color: #FAF9F6;
+    /* Global Font */
+    * {
+        font-family: 'Roboto', sans-serif;
     }
     
-    /* Navigation Bar */
+    /* Main background */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    /* Navigation Bar - Glassmorphism */
     .navbar {
-        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
-        padding: 1.2rem 2rem;
-        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem 2.5rem;
+        border-radius: 20px;
         margin-bottom: 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 20px rgba(226, 169, 241, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     }
     
-    .nav-logo {
+    .nav-left {
         display: flex;
         align-items: center;
         gap: 1rem;
-        color: white;
-        font-size: 2rem;
-        font-weight: bold;
     }
     
-    .nav-logo img {
+    .nav-logo-img {
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: white;
-        padding: 5px;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .app-name {
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
     
     .nav-right {
         display: flex;
         align-items: center;
-        gap: 2rem;
+        gap: 1.5rem;
     }
     
-    .nav-item {
+    .nav-icon {
         color: white;
-        font-size: 1.1rem;
+        font-size: 1.4rem;
         cursor: pointer;
-        transition: all 0.3s;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.5rem 1.5rem;
-        border-radius: 20px;
+        transition: all 0.3s ease;
+        padding: 0.7rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
     }
     
-    .nav-item:hover {
-        background: rgba(255, 255, 255, 0.4);
-        transform: translateY(-2px);
+    .nav-icon:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
     
-    .user-profile {
+    .user-profile-img {
         width: 45px;
         height: 45px;
         border-radius: 50%;
-        border: 3px solid white;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
     
-    /* Hero Section */
+    .user-profile-img:hover {
+        transform: scale(1.1);
+        border-color: white;
+    }
+    
+    /* Hero Section - Glassmorphism */
     .hero-section {
-        text-align: center;
-        padding: 3rem 2rem;
-        background: linear-gradient(135deg, #F5EEFA 0%, white 100%);
-        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 25px;
+        padding: 3rem;
         margin: 2rem 0;
-        box-shadow: 0 4px 20px rgba(226, 169, 241, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        text-align: center;
     }
     
-    .hero-title {
-        color: #4A4459;
-        font-size: 2.8rem;
-        font-weight: bold;
-        margin-bottom: 1rem;
-    }
-    
-    .hero-subtitle {
-        color: #4A4459;
-        font-size: 1.3rem;
-        opacity: 0.8;
-        margin-bottom: 2rem;
+    .hero-image-container {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
     }
     
     .hero-image {
-        max-width: 600px;
         width: 100%;
-        border-radius: 15px;
-        margin-top: 2rem;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        height: auto;
+        display: block;
+        transition: transform 0.3s ease;
     }
     
-    /* AI Chat Button */
+    .hero-image:hover {
+        transform: scale(1.02);
+    }
+    
+    /* AI Chat Button - Floating */
     .ai-button-container {
         position: fixed;
         bottom: 30px;
@@ -139,265 +172,324 @@ st.markdown("""
     }
     
     .ai-chat-button {
-        width: 70px;
-        height: 70px;
+        width: 75px;
+        height: 75px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 6px 25px rgba(226, 169, 241, 0.5);
-        transition: all 0.3s;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        transition: all 0.3s ease;
         animation: pulse 2s infinite;
     }
     
     .ai-chat-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 8px 35px rgba(226, 169, 241, 0.7);
+        transform: scale(1.15);
+        background: rgba(255, 255, 255, 0.3);
     }
     
-    .ai-chat-button img {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
+    .ai-chat-button i {
+        font-size: 2.2rem;
+        color: white;
     }
     
     @keyframes pulse {
         0%, 100% {
-            box-shadow: 0 6px 25px rgba(226, 169, 241, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
         50% {
-            box-shadow: 0 6px 40px rgba(226, 169, 241, 0.8);
+            box-shadow: 0 8px 50px 0 rgba(31, 38, 135, 0.6);
         }
     }
     
-    /* Chat Interface */
+    /* Chat Interface - Glassmorphism */
     .chat-container {
-        background: white;
-        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        max-width: 800px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        max-width: 900px;
         margin: 2rem auto;
     }
     
+    .chat-header {
+        color: white;
+        font-size: 1.6rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    
     .chat-message {
-        padding: 1rem;
-        border-radius: 10px;
+        padding: 1.2rem 1.5rem;
+        border-radius: 15px;
         margin: 1rem 0;
+        font-size: 1rem;
+        line-height: 1.6;
     }
     
     .chat-message.user {
-        background: #F5EEFA;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(5px);
+        color: white;
         margin-left: 20%;
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     .chat-message.assistant {
-        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
+        background: rgba(102, 126, 234, 0.3);
+        backdrop-filter: blur(5px);
         color: white;
         margin-right: 20%;
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
-    /* Report Form */
+    /* Report Form - Glassmorphism */
     .report-form {
-        background: white;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         margin: 2rem 0;
     }
     
-    .form-section {
-        margin: 1.5rem 0;
-    }
-    
-    .form-label {
-        color: #4A4459;
-        font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-    
-    /* Ambulance Button */
-    .ambulance-button {
-        background: linear-gradient(135deg, #FFB4A2 0%, #FF9B87 100%);
+    .form-section-title {
         color: white;
-        padding: 1rem 2rem;
-        border-radius: 30px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 20px rgba(255, 180, 162, 0.4);
-        transition: all 0.3s;
-        animation: glow 2s infinite;
+        font-size: 1.4rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
     }
     
-    .ambulance-button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 6px 30px rgba(255, 180, 162, 0.6);
+    /* Success Message - Glassmorphism */
+    .success-message {
+        background: rgba(76, 175, 80, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 2px solid rgba(76, 175, 80, 0.5);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        margin: 2rem 0;
+        box-shadow: 0 8px 32px 0 rgba(76, 175, 80, 0.3);
     }
     
-    @keyframes glow {
-        0%, 100% {
-            box-shadow: 0 4px 20px rgba(255, 180, 162, 0.4);
-        }
-        50% {
-            box-shadow: 0 6px 35px rgba(255, 180, 162, 0.7);
-        }
+    .success-message h2 {
+        font-size: 1.8rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
     }
     
-    /* Case Cards */
+    .success-message h3 {
+        font-size: 1.3rem;
+        font-weight: 400;
+        margin: 0.5rem 0;
+    }
+    
+    /* Case Cards - Glassmorphism */
     .case-card {
-        background: white;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 1.5rem;
-        border-radius: 15px;
+        border-radius: 20px;
         margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-left: 5px solid #e2a9f1;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        border-left: 5px solid rgba(102, 126, 234, 0.8);
+        color: white;
     }
     
     .case-id {
-        color: #e2a9f1;
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    
-    .case-status {
-        background: #A8C9A5;
         color: white;
-        padding: 0.3rem 1rem;
-        border-radius: 20px;
-        display: inline-block;
-        margin-top: 0.5rem;
-    }
-    
-    /* Vet Cards */
-    .vet-card {
-        background: linear-gradient(135deg, #F5EEFA 0%, white 100%);
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        box-shadow: 0 4px 15px rgba(226, 169, 241, 0.2);
-        border: 2px solid #e2a9f1;
-    }
-    
-    .vet-name {
-        color: #4A4459;
-        font-size: 1.4rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    
-    .vet-detail {
-        color: #4A4459;
-        margin: 0.5rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .vet-tag {
-        background: #A8C9A5;
-        color: white;
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.9rem;
-        display: inline-block;
-        margin: 0.2rem;
-    }
-    
-    /* Success Messages */
-    .success-message {
-        background: linear-gradient(135deg, #A8C9A5 0%, #95B892 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
-        text-align: center;
-        margin: 2rem 0;
-        box-shadow: 0 4px 20px rgba(168, 201, 165, 0.3);
-    }
-    
-    /* No Cases Image */
-    .no-cases-container {
-        text-align: center;
-        padding: 3rem;
-    }
-    
-    .no-cases-image {
-        max-width: 400px;
-        width: 100%;
-        opacity: 0.7;
+        font-weight: 600;
+        font-size: 1.3rem;
         margin-bottom: 1rem;
     }
     
+    .case-status {
+        background: rgba(76, 175, 80, 0.3);
+        backdrop-filter: blur(5px);
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 1rem;
+        border: 1px solid rgba(76, 175, 80, 0.5);
+        font-weight: 500;
+    }
+    
+    /* Vet Suggestions Styling */
+    .vet-suggestions {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 2rem;
+        border-radius: 20px;
+        margin: 1.5rem 0;
+        color: white;
+        line-height: 1.8;
+    }
+    
+    .vet-suggestions h3 {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+    
+    /* No Cases Container */
+    .no-cases-container {
+        text-align: center;
+        padding: 3rem;
+        color: white;
+    }
+    
     .no-cases-text {
-        color: #4A4459;
         font-size: 1.3rem;
-        opacity: 0.8;
+        font-weight: 400;
+        margin-top: 1rem;
+        opacity: 0.9;
     }
     
     /* Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         color: white;
-        border: none;
         padding: 0.8rem 2rem;
         border-radius: 25px;
         font-size: 1.1rem;
-        font-weight: bold;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(226, 169, 241, 0.3);
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
     
     .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.3);
         transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(226, 169, 241, 0.5);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    /* Input Fields Styling */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > div,
+    .stTextArea > div > div > textarea {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 10px !important;
+        font-size: 1rem !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder,
+    .stTextArea > div > div > textarea::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    
+    /* Labels */
+    label {
+        color: white !important;
+        font-weight: 500 !important;
+        font-size: 1.05rem !important;
+    }
+    
+    /* File Uploader */
+    .stFileUploader {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    
+    .stFileUploader label {
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Helper function to display images
-def get_image_placeholder(image_name, alt_text):
-    """Returns HTML for image placeholder"""
-    return f'<div style="background: #e2a9f1; color: white; padding: 20px; border-radius: 10px; text-align: center; font-weight: bold;">{alt_text}<br><small>({image_name})</small></div>'
+# Helper function to load images
+def load_image(image_path):
+    """Load and display image"""
+    try:
+        return Image.open(image_path)
+    except:
+        return None
 
 # Navigation Bar
 def render_navbar():
-    st.markdown(f"""
-    <div class="navbar">
-        <div class="nav-logo">
-            {get_image_placeholder('logo.png', '🐾')}
-            <span>PawAlert</span>
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.markdown("""
+        <div class="nav-left">
+            <img src="data:image/png;base64,{}" class="nav-logo-img" alt="Logo">
+            <span class="app-name">PawAlert</span>
         </div>
+        """.format(get_image_base64("logo.png") if get_image_base64("logo.png") else ""), unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
         <div class="nav-right">
-            <div class="nav-item" onclick="window.location.reload();">
-                <i class="fas fa-home"></i> Home
+            <div class="nav-icon" title="Status">
+                <i class="fas fa-chart-line"></i>
             </div>
-            {get_image_placeholder('default.png', '👤')}
+            <div class="nav-icon" title="AI Assistant">
+                <i class="fas fa-robot"></i>
+            </div>
+            <img src="data:image/png;base64,{}" class="user-profile-img" alt="Profile">
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """.format(get_image_base64("default.png") if get_image_base64("default.png") else ""), unsafe_allow_html=True)
+
+def get_image_base64(image_path):
+    """Convert image to base64 for embedding"""
+    try:
+        img = Image.open(image_path)
+        import io
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        return base64.b64encode(buffered.getvalue()).decode()
+    except:
+        return None
 
 # AI Chat Button (Floating)
 def render_ai_button():
-    st.markdown(f"""
+    st.markdown("""
     <div class="ai-button-container">
         <div class="ai-chat-button" onclick="document.getElementById('chat-trigger').click();">
-            {get_image_placeholder('ai.png', '🤖')}
+            <i class="fas fa-comments"></i>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # Groq API Setup
 def get_groq_client():
-    # Replace with your actual API key
     api_key = st.secrets.get("GROQ_API_KEY", "your-groq-api-key-here")
     return Groq(api_key=api_key)
 
-# Vet Database (7 vets for Delhi/Ghaziabad region)
+# Vet Database
 VET_DATABASE = """
 Available Veterinary Hospitals:
 
@@ -515,82 +607,29 @@ def generate_case_id():
 
 # Home Page
 def render_home():
-    # Hero Section
-    st.markdown("""
-    <div class="hero-section">
-        <h1 class="hero-title">🐾 Every Life Matters</h1>
-        <p class="hero-subtitle">Report animal injuries and abuse. Get instant AI-powered vet recommendations and emergency response.</p>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="hero-section">', unsafe_allow_html=True)
     
-    # Placeholder for main.png
-    st.markdown(get_image_placeholder('main.png', '🌟 Beautiful Hero Image - Happy rescued animals'), unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # How it Works Section
-    st.markdown("### 🚀 How PawAlert Works")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
+    # Try to load and display main.png
+    main_img = load_image("main.png")
+    if main_img:
+        st.markdown('<div class="hero-image-container">', unsafe_allow_html=True)
+        st.image(main_img, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
         st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: #F5EEFA; border-radius: 15px; margin: 1rem 0;">
-            <div style="font-size: 3rem;">📸</div>
-            <h3 style="color: #4A4459;">Report</h3>
-            <p style="color: #4A4459; opacity: 0.8;">Click the AI button, describe the situation, and upload photos/videos</p>
+        <div class="hero-image-container" style="background: rgba(255,255,255,0.1); padding: 100px; text-align: center; color: white;">
+            <i class="fas fa-paw" style="font-size: 5rem; margin-bottom: 1rem;"></i>
+            <h2 style="font-size: 2rem; font-weight: 500;">Welcome to PawAlert</h2>
+            <p style="font-size: 1.2rem; opacity: 0.9;">Saving Lives, One Paw at a Time</p>
         </div>
         """, unsafe_allow_html=True)
     
-    with col2:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: #F5EEFA; border-radius: 15px; margin: 1rem 0;">
-            <div style="font-size: 3rem;">🤖</div>
-            <h3 style="color: #4A4459;">AI Analysis</h3>
-            <p style="color: #4A4459; opacity: 0.8;">Our AI suggests the best veterinary care nearby</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem; background: #F5EEFA; border-radius: 15px; margin: 1rem 0;">
-            <div style="font-size: 3rem;">🚑</div>
-            <h3 style="color: #4A4459;">Rescue</h3>
-            <p style="color: #4A4459; opacity: 0.8;">Dispatch ambulance and track your case status</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Impact Stats
-    st.markdown("### 💜 Our Impact")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%); border-radius: 15px; color: white;">
-            <h2>1,247</h2>
-            <p>Animals Rescued</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #A8C9A5 0%, #95B892 100%); border-radius: 15px; color: white;">
-            <h2>324</h2>
-            <p>Active Cases</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #FFB4A2 0%, #FF9B87 100%); border-radius: 15px; color: white;">
-            <h2>847</h2>
-            <p>Community Heroes</p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat Interface
 def render_chat():
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-    st.markdown("### 🤖 AI Assistant - Report Animal Emergency")
+    st.markdown('<div class="chat-header"><i class="fas fa-robot"></i> AI Assistant - Report Animal Emergency</div>', unsafe_allow_html=True)
     
     # Chat Messages
     for msg in st.session_state.chat_messages:
@@ -601,7 +640,7 @@ def render_chat():
     if len(st.session_state.chat_messages) == 0:
         st.markdown('''
         <div class="chat-message assistant">
-            🐾 Hello! I'm here to help you report an animal emergency.<br><br>
+            <i class="fas fa-paw"></i> Hello! I'm here to help you report an animal emergency.<br><br>
             Please tell me:<br>
             1. <strong>Location</strong> where the animal is<br>
             2. <strong>What happened</strong> (injury or abuse)<br>
@@ -616,7 +655,7 @@ def render_chat():
     # Report Form
     if not st.session_state.report_submitted:
         st.markdown("---")
-        st.markdown("### 📝 Fill Report Details")
+        st.markdown('<div class="form-section-title"><i class="fas fa-clipboard-list"></i> Fill Report Details</div>', unsafe_allow_html=True)
         
         with st.form("report_form"):
             col1, col2 = st.columns(2)
@@ -664,13 +703,9 @@ def render_chat():
                     st.error("⚠️ Please fill in location and description!")
                 else:
                     with st.spinner("🔍 Analyzing situation and finding best veterinary care..."):
-                        # Get AI suggestions
                         vet_suggestions = get_vet_suggestions(location, issue_desc, severity, report_type)
-                        
-                        # Generate Case ID
                         case_id = generate_case_id()
                         
-                        # Save case
                         case = {
                             "case_id": case_id,
                             "type": report_type,
@@ -692,18 +727,19 @@ def render_chat():
         
         st.markdown(f"""
         <div class="success-message">
-            <h2>✅ Report Submitted Successfully!</h2>
+            <h2><i class="fas fa-check-circle"></i> Report Submitted Successfully!</h2>
             <h3>Case ID: {latest_case['case_id']}</h3>
-            <p>🐾 Your report is helping an animal in need</p>
+            <p><i class="fas fa-paw"></i> Your report is helping an animal in need</p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("### 🏥 Recommended Veterinary Care")
+        st.markdown('<div class="vet-suggestions">', unsafe_allow_html=True)
+        st.markdown('<h3><i class="fas fa-hospital"></i> Recommended Veterinary Care</h3>', unsafe_allow_html=True)
         st.markdown(latest_case['vet_suggestions'])
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("---")
         
-        # Ambulance Dispatch Button
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
             if st.button("🚑 DISPATCH AMBULANCE NOW", key="ambulance", use_container_width=True):
@@ -720,53 +756,85 @@ def render_chat():
 
 # Status Page
 def render_status():
-    st.markdown("### 📊 Case Status Tracker")
+    st.markdown('<div class="form-section-title"><i class="fas fa-chart-line"></i> Case Status Tracker</div>', unsafe_allow_html=True)
     
     if len(st.session_state.cases) == 0:
-        st.markdown('<div class="no-cases-container">', unsafe_allow_html=True)
-        st.markdown(get_image_placeholder('image1.png', '📭 No Cases Yet'), unsafe_allow_html=True)
-        st.markdown('<p class="no-cases-text">No cases are created yet.<br>Click the AI button to report an emergency.</p>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('''
+        <div class="no-cases-container">
+            <i class="fas fa-folder-open" style="font-size: 5rem; opacity: 0.7;"></i>
+            <p class="no-cases-text">No cases created yet.<br>Click the AI button to report an emergency.</p>
+        </div>
+        ''', unsafe_allow_html=True)
     else:
         for case in reversed(st.session_state.cases):
             st.markdown(f"""
             <div class="case-card">
-                <div class="case-id">🐾 {case['case_id']}</div>
-                <div style="margin-top: 0.5rem;">
-                    <strong>Type:</strong> {case['type']}<br>
-                    <strong>Animal:</strong> {case['animal_type']}<br>
-                    <strong>Location:</strong> {case['location']}<br>
-                    <strong>Severity:</strong> {case['severity']}<br>
-                    <strong>Time:</strong> {case['timestamp']}<br>
-                    <strong>Description:</strong> {case['description']}
+                <div class="case-id"><i class="fas fa-paw"></i> {case['case_id']}</div>
+                <div style="margin-top: 0.5rem; line-height: 1.8;">
+                    <strong><i class="fas fa-tag"></i> Type:</strong> {case['type']}<br>
+                    <strong><i class="fas fa-dog"></i> Animal:</strong> {case['animal_type']}<br>
+                    <strong><i class="fas fa-map-marker-alt"></i> Location:</strong> {case['location']}<br>
+                    <strong><i class="fas fa-exclamation-triangle"></i> Severity:</strong> {case['severity']}<br>
+                    <strong><i class="fas fa-clock"></i> Time:</strong> {case['timestamp']}<br>
+                    <strong><i class="fas fa-file-alt"></i> Description:</strong> {case['description']}
                 </div>
-                <div class="case-status">✅ {case['status']}</div>
+                <div class="case-status"><i class="fas fa-check-circle"></i> {case['status']}</div>
             </div>
             """, unsafe_allow_html=True)
 
 # Main App Logic
 def main():
-    render_navbar()
+    # Navigation Bar with functional buttons
+    col_left, col_space, col_status, col_ai, col_profile = st.columns([3, 5, 1, 1, 1])
     
-    # Page Navigation
-    col1, col2 = st.columns([5, 1])
-    with col2:
-        if st.button("📊 Status", key="status_nav"):
+    with col_left:
+        logo_col, name_col = st.columns([1, 3])
+        with logo_col:
+            logo_img = load_image("logo.png")
+            if logo_img:
+                st.image(logo_img, width=50)
+            else:
+                st.markdown('<i class="fas fa-paw" style="font-size: 2.5rem; color: white;"></i>', unsafe_allow_html=True)
+        with name_col:
+            st.markdown('<div class="app-name">PawAlert</div>', unsafe_allow_html=True)
+    
+    with col_status:
+        if st.button("", key="status_nav", help="View Status", use_container_width=True):
             st.session_state.current_page = 'status'
+            st.session_state.show_chat = False
             st.rerun()
+        st.markdown('<div style="text-align: center; margin-top: -45px;"><i class="fas fa-chart-line" style="font-size: 1.4rem; color: white;"></i></div>', unsafe_allow_html=True)
     
-    # Hidden button for chat trigger
-    if st.button("Open Chat", key="chat-trigger", type="primary"):
+    with col_ai:
+        if st.button("", key="ai_nav", help="AI Assistant", use_container_width=True):
+            st.session_state.show_chat = True
+            st.session_state.current_page = 'chat'
+            st.rerun()
+        st.markdown('<div style="text-align: center; margin-top: -45px;"><i class="fas fa-robot" style="font-size: 1.4rem; color: white;"></i></div>', unsafe_allow_html=True)
+    
+    with col_profile:
+        profile_img = load_image("default.png")
+        if profile_img:
+            st.image(profile_img, width=45)
+        else:
+            st.markdown('<div style="text-align: center;"><i class="fas fa-user-circle" style="font-size: 2.5rem; color: white;"></i></div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Hidden button for floating AI chat trigger
+    if st.button("Open Chat", key="chat-trigger", type="primary", help="Open AI Chat"):
         st.session_state.show_chat = True
+        st.session_state.current_page = 'chat'
         st.rerun()
     
     # Show appropriate page
-    if st.session_state.show_chat:
+    if st.session_state.show_chat or st.session_state.current_page == 'chat':
         render_chat()
     elif st.session_state.current_page == 'status':
         render_status()
-        if st.button("🏠 Back to Home"):
+        if st.button("🏠 Back to Home", use_container_width=True):
             st.session_state.current_page = 'home'
+            st.session_state.show_chat = False
             st.rerun()
     else:
         render_home()
