@@ -13,6 +13,9 @@ st.set_page_config(
 )
 
 # Initialize Groq client from secrets
+GROQ_API_KEY = None
+client = None
+
 try:
     # Try to get from Streamlit secrets
     if "GROQ_API_KEY" in st.secrets:
@@ -20,15 +23,23 @@ try:
     else:
         # Fallback to environment variable
         GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-        if not GROQ_API_KEY:
-            st.error("⚠️ GROQ_API_KEY not found in secrets or environment variables!")
-            st.info("Please add GROQ_API_KEY to your Streamlit secrets or set it as an environment variable.")
-            st.stop()
     
+    if not GROQ_API_KEY:
+        st.error("⚠️ GROQ_API_KEY not found in secrets or environment variables!")
+        st.info("Please add GROQ_API_KEY to your Streamlit secrets.")
+        st.stop()
+    
+    # Initialize Groq client with minimal parameters
     client = Groq(api_key=GROQ_API_KEY)
+    
 except Exception as e:
     st.error(f"⚠️ Error initializing Groq client: {str(e)}")
-    st.info("Please check your GROQ_API_KEY in Streamlit secrets.")
+    st.info("""
+    **Possible fixes:**
+    1. Update groq library: `pip install --upgrade groq`
+    2. Check your GROQ_API_KEY in Streamlit secrets
+    3. Make sure groq version is >= 0.4.0
+    """)
     st.stop()
 
 # Custom CSS with theme color
