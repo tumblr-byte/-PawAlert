@@ -199,6 +199,10 @@ if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 if 'selected_hospital' not in st.session_state:
     st.session_state.selected_hospital = None
+if 'show_hospitals' not in st.session_state:
+    st.session_state.show_hospitals = False
+if 'current_case' not in st.session_state:
+    st.session_state.current_case = None
 
 # Function to encode image
 def encode_image(image_file):
@@ -208,8 +212,9 @@ def encode_image(image_file):
 def analyze_with_groq(prompt, image_data=None):
     try:
         if image_data:
+            # Use Llama 3.2 11B Vision for image analysis
             response = client.chat.completions.create(
-                model="llama-3.2-90b-vision-preview",
+                model="llama-3.2-11b-vision-preview",
                 messages=[
                     {
                         "role": "user",
@@ -227,8 +232,9 @@ def analyze_with_groq(prompt, image_data=None):
                 max_tokens=1000
             )
         else:
+            # Use Llama 3.3 70B for text-only analysis
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=1000
             )
@@ -335,41 +341,45 @@ def injury_page():
     
     if st.button("⬅️ Back to Home", key="back_injury"):
         st.session_state.current_page = 'home'
+        st.session_state.show_hospitals = False
+        st.session_state.current_case = None
         st.rerun()
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-ambulance'></i> Report Animal Injury</h2>", unsafe_allow_html=True)
     
-    with st.form("injury_form"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            animal_type = st.selectbox(
-                "Animal Type",
-                ["Dog", "Cat", "Cow", "Horse", "Bird", "Buffalo", "Goat", "Other"]
-            )
+    # Only show form if hospitals are not being displayed
+    if not st.session_state.show_hospitals:
+        with st.form("injury_form"):
+            col1, col2 = st.columns(2)
             
-            location = st.selectbox(
-                "Location",
-                ["Connaught Place, Delhi", "MG Road, Bangalore", "Marine Drive, Mumbai"]
-            )
-        
-        with col2:
-            description = st.text_area("Description of Injury", height=100, placeholder="Please describe the injury in detail...")
-        
-        uploaded_file = st.file_uploader("Upload Image/Video of Injured Animal", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
-        
-        submit = st.form_submit_button("🚨 Submit Report", use_container_width=True)
-        
-        if submit:
-            if not description:
-                st.error("⚠️ Please provide a description of the injury!")
-            elif not uploaded_file:
-                st.error("⚠️ Please upload an image or video of the injured animal!")
-            else:
-                with st.spinner("🔍 Analyzing injury with AI..."):
-                    image_data = encode_image(uploaded_file)
-                    
-                    prompt = f"""Analyze this animal injury image. The animal is a {animal_type} at {location}.
+            with col1:
+                animal_type = st.selectbox(
+                    "Animal Type",
+                    ["Dog", "Cat", "Cow", "Horse", "Bird", "Buffalo", "Goat", "Other"]
+                )
+                
+                location = st.selectbox(
+                    "Location",
+                    ["Connaught Place, Delhi", "MG Road, Bangalore", "Marine Drive, Mumbai"]
+                )
+            
+            with col2:
+                description = st.text_area("Description of Injury", height=100, placeholder="Please describe the injury in detail...")
+            
+            uploaded_file = st.file_uploader("Upload Image/Video of Injured Animal", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
+            
+            submit = st.form_submit_button("🚨 Submit Report", use_container_width=True)
+            
+            if submit:
+                if not description:
+                    st.error("⚠️ Please provide a description of the injury!")
+                elif not uploaded_file:
+                    st.error("⚠️ Please upload an image or video of the injured animal!")
+                else:
+                    with st.spinner("🔍 Analyzing injury with AI..."):
+                        image_data = encode_image(uploaded_file)
+                        
+                        prompt = f"""Analyze this animal injury image. The animal is a {animal_type} at {location}.
 Description: {description}
 
 Provide a detailed analysis with:
@@ -380,107 +390,123 @@ Provide a detailed analysis with:
 5. Estimated Recovery Time
 
 Keep response professional and structured."""
-                    
-                    analysis = analyze_with_groq(prompt, image_data)
-                    
-                    # Generate hospital recommendations
-                    hospitals = [
-                        {
-                            "name": "PetCare Emergency Hospital",
-                            "location": location,
-                            "availability": "Available Now",
-                            "contact": "+91 98765-43210",
-                            "fees": "₹2,000 - ₹5,000",
-                            "speciality": "Emergency & Critical Care"
-                        },
-                        {
-                            "name": "Animal Rescue Veterinary Clinic",
-                            "location": location,
-                            "availability": "Available in 15 mins",
-                            "contact": "+91 98765-43211",
-                            "fees": "₹1,500 - ₹4,000",
-                            "speciality": "General Treatment"
-                        },
-                        {
-                            "name": "24/7 Animal Care Center",
-                            "location": location,
-                            "availability": "Available Now",
-                            "contact": "+91 98765-43212",
-                            "fees": "₹2,500 - ₹6,000",
-                            "speciality": "Surgery & ICU"
-                        }
-                    ]
-                    
-                    case_id = f"INJ{len(st.session_state.cases) + 1001}"
-                    driver_name = "Rajesh Kumar"
-                    driver_contact = "+91 98765-11111"
-                    
-                    case = {
-                        "id": case_id,
-                        "type": "Injury",
-                        "animal_type": animal_type,
-                        "location": location,
-                        "description": description,
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "analysis": analysis,
-                        "hospitals": hospitals,
-                        "driver_name": driver_name,
-                        "driver_contact": driver_contact,
-                        "selected_hospital": None,
-                        "status": "Case Registered"
-                    }
-                    
-                    st.session_state.cases.append(case)
-                    
-                    st.markdown(f"""
-                    <div class="success-box">
-                        <h3 style="color: #2e7d32; margin-top: 0;"><i class="fas fa-check-circle"></i> Case Registered Successfully!</h3>
-                        <p style="color: #1b5e20; font-size: 18px; margin: 10px 0;"><strong>Case ID: {case_id}</strong></p>
-                        <p style="color: #2e7d32; font-size: 16px;">Timestamp: {case['timestamp']}</p>
-                        <p style="color: #2e7d32;">Your report has been submitted. Please select a hospital below to dispatch ambulance!</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                    <div class="case-card">
-                        <h3 style="color: #6b1e6f;"><i class="fas fa-notes-medical"></i> AI Analysis Report</h3>
-                        <p style="color: #4a0e4e; line-height: 1.8;">{analysis}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("<h3 style='color: #6b1e6f; margin-top: 30px;'><i class='fas fa-hospital'></i> Recommended Veterinary Hospitals</h3>", unsafe_allow_html=True)
-                    
-                    for i, hospital in enumerate(hospitals):
-                        st.markdown(f"""
-                        <div class="hospital-card">
-                            <h4 style="color: #6b1e6f; margin-top: 0;"><i class="fas fa-hospital-alt"></i> {hospital['name']}</h4>
-                            <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-stethoscope"></i> <strong>Speciality:</strong> {hospital['speciality']}</p>
-                            <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {hospital['location']}</p>
-                            <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-phone"></i> <strong>Contact:</strong> {hospital['contact']}</p>
-                            <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-rupee-sign"></i> <strong>Estimated Fees:</strong> {hospital['fees']}</p>
-                            <span class="status-badge"><i class="fas fa-clock"></i> {hospital['availability']}</span>
-                        </div>
-                        """, unsafe_allow_html=True)
                         
-                        if st.button(f"🚑 Dispatch Ambulance to {hospital['name']}", key=f"ambulance_{case_id}_{i}", use_container_width=True):
-                            # Update case with selected hospital
-                            st.session_state.cases[-1]['selected_hospital'] = hospital
-                            st.session_state.cases[-1]['status'] = 'Ambulance Dispatched'
-                            
-                            st.success(f"""
+                        analysis = analyze_with_groq(prompt, image_data)
+                        
+                        # Generate hospital recommendations
+                        hospitals = [
+                            {
+                                "name": "PetCare Emergency Hospital",
+                                "location": location,
+                                "availability": "Available Now",
+                                "contact": "+91 98765-43210",
+                                "fees": "₹2,000 - ₹5,000",
+                                "speciality": "Emergency & Critical Care"
+                            },
+                            {
+                                "name": "Animal Rescue Veterinary Clinic",
+                                "location": location,
+                                "availability": "Available in 15 mins",
+                                "contact": "+91 98765-43211",
+                                "fees": "₹1,500 - ₹4,000",
+                                "speciality": "General Treatment"
+                            },
+                            {
+                                "name": "24/7 Animal Care Center",
+                                "location": location,
+                                "availability": "Available Now",
+                                "contact": "+91 98765-43212",
+                                "fees": "₹2,500 - ₹6,000",
+                                "speciality": "Surgery & ICU"
+                            }
+                        ]
+                        
+                        case_id = f"INJ{len(st.session_state.cases) + 1001}"
+                        driver_name = "Rajesh Kumar"
+                        driver_contact = "+91 98765-11111"
+                        
+                        case = {
+                            "id": case_id,
+                            "type": "Injury",
+                            "animal_type": animal_type,
+                            "location": location,
+                            "description": description,
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "analysis": analysis,
+                            "hospitals": hospitals,
+                            "driver_name": driver_name,
+                            "driver_contact": driver_contact,
+                            "selected_hospital": None,
+                            "status": "Case Registered"
+                        }
+                        
+                        st.session_state.cases.append(case)
+                        st.session_state.current_case = case
+                        st.session_state.show_hospitals = True
+                        st.rerun()
+    
+    # Display results after form submission
+    if st.session_state.show_hospitals and st.session_state.current_case:
+        case = st.session_state.current_case
+        
+        st.markdown(f"""
+        <div class="success-box">
+            <h3 style="color: #2e7d32; margin-top: 0;"><i class="fas fa-check-circle"></i> Case Registered Successfully!</h3>
+            <p style="color: #1b5e20; font-size: 18px; margin: 10px 0;"><strong>Case ID: {case['id']}</strong></p>
+            <p style="color: #2e7d32; font-size: 16px;">Timestamp: {case['timestamp']}</p>
+            <p style="color: #2e7d32;">Your report has been submitted. Please select a hospital below to dispatch ambulance!</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="case-card">
+            <h3 style="color: #6b1e6f;"><i class="fas fa-notes-medical"></i> AI Analysis Report</h3>
+            <p style="color: #4a0e4e; line-height: 1.8;">{case['analysis']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<h3 style='color: #6b1e6f; margin-top: 30px;'><i class='fas fa-hospital'></i> Recommended Veterinary Hospitals</h3>", unsafe_allow_html=True)
+        
+        for i, hospital in enumerate(case['hospitals']):
+            st.markdown(f"""
+            <div class="hospital-card">
+                <h4 style="color: #6b1e6f; margin-top: 0;"><i class="fas fa-hospital-alt"></i> {hospital['name']}</h4>
+                <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-stethoscope"></i> <strong>Speciality:</strong> {hospital['speciality']}</p>
+                <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> {hospital['location']}</p>
+                <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-phone"></i> <strong>Contact:</strong> {hospital['contact']}</p>
+                <p style="color: #8e44ad; margin: 8px 0;"><i class="fas fa-rupee-sign"></i> <strong>Estimated Fees:</strong> {hospital['fees']}</p>
+                <span class="status-badge"><i class="fas fa-clock"></i> {hospital['availability']}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button(f"🚑 Dispatch Ambulance to {hospital['name']}", key=f"dispatch_ambulance_{i}", use_container_width=True):
+                # Update the case in the cases list
+                for idx, c in enumerate(st.session_state.cases):
+                    if c['id'] == case['id']:
+                        st.session_state.cases[idx]['selected_hospital'] = hospital
+                        st.session_state.cases[idx]['status'] = 'Ambulance Dispatched'
+                        break
+                
+                st.success(f"""
 ✅ **Ambulance Dispatched Successfully!**
 
 🏥 **Hospital:** {hospital['name']}
-🚗 **Driver:** {driver_name}
-📞 **Driver Contact:** {driver_contact}
+🚗 **Driver:** {case['driver_name']}
+📞 **Driver Contact:** {case['driver_contact']}
 📍 **Going to:** {hospital['location']}
 💰 **Estimated Fees:** {hospital['fees']}
 
 **The ambulance is on its way to pick up the animal!**
 
 👉 Click **'Check Status'** button at the top to track your case anytime!
-                            """)
-                            st.balloons()
+                """)
+                st.balloons()
+        
+        # Add a button to create another report
+        if st.button("📝 Report Another Injury", use_container_width=True):
+            st.session_state.show_hospitals = False
+            st.session_state.current_case = None
+            st.rerun()
 
 # Abuse Report Page
 def abuse_page():
