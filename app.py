@@ -164,6 +164,14 @@ col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown('<div class="main-img-container">', unsafe_allow_html=True)
     try:
+        st.image("main.png", use_column_width=True)
+    except Exception as e:
+        st.error(f"Cannot load main.png: {e}")
+        st.info("Make sure main.png is in the same folder as app.py")
+    st.markdown('</div>', unsafe_allow_html=True) 2, 1])
+with col2:
+    st.markdown('<div class="main-img-container">', unsafe_allow_html=True)
+    try:
         st.image("main.png", use_container_width=True)
     except Exception as e:
         st.error(f"Cannot load main.png: {e}")
