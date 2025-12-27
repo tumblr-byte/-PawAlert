@@ -21,6 +21,11 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
+    /* White background */
+    .stApp {
+        background-color: white;
+    }
+    
     /* Custom Navigation Bar */
     .nav-container {
         background: linear-gradient(135deg, #e2a9f1 0%, #d896ea 100%);
@@ -72,8 +77,8 @@ st.markdown("""
     }
     
     .profile-img {
-        width: 140px;
-        height: 140px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid white;
@@ -127,16 +132,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Navigation Bar with images
-col_left, col_mid, col_right = st.columns([2, 6, 2])
-
-with col_left:
-    try:
-        st.image("logo.png", width=50)
-    except:
-        st.write("🐾")
-
-with col_mid:
-    st.markdown("""
+st.markdown("""
     <div class="nav-container">
         <div class="nav-left">
             <div class="brand-name">PawAlert</div>
@@ -148,11 +144,23 @@ with col_mid:
     </div>
 """, unsafe_allow_html=True)
 
-with col_right:
+# Add logo and profile with absolute positioning
+col1, col2, col3 = st.columns([1, 8, 1])
+with col1:
+    st.markdown('<div style="margin-top: -80px;">', unsafe_allow_html=True)
     try:
-        st.image("default.png", width=40)
+        st.image("logo.png", width=60)
     except:
-        st.write("👤")
+        pass
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col3:
+    st.markdown('<div style="margin-top: -80px;">', unsafe_allow_html=True)
+    try:
+        st.image("default.png", width=50)
+    except:
+        pass
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Body Section
 st.markdown('<div class="body-container">', unsafe_allow_html=True)
@@ -164,18 +172,6 @@ st.markdown('<p class="subtitle">Report animal injuries and abuse to save lives<
 # Main Image
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    try:
-        st.image("main.png", use_container_width=True, output_format="auto")
-    except:
-        st.markdown("""
-            <div style="background: linear-gradient(135deg, #e2a9f1 0%, #d896ea 100%); 
-                        padding: 200px; 
-                        border-radius: 20px; 
-                        color: white; 
-                        text-align: center;
-                        font-size: 24px;">
-                🐾 Main Image Placeholder 🐾
-            </div>
-        """, unsafe_allow_html=True)
+    st.image("main.png", use_container_width=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
