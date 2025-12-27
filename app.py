@@ -72,8 +72,8 @@ st.markdown("""
     }
     
     .profile-img {
-        width: 40px;
-        height: 40px;
+        width: 140px;
+        height: 140px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid white;
