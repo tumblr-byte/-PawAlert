@@ -2,7 +2,6 @@ import streamlit as st
 from datetime import datetime
 import base64
 from groq import Groq
-import json
 import os
 
 # Page config
@@ -12,10 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize Groq client from secrets
-GROQ_API_KEY = None
-client = None
-
+# Initialize Groq client
 try:
     if "GROQ_API_KEY" in st.secrets:
         GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
@@ -23,171 +19,76 @@ try:
         GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
     
     if not GROQ_API_KEY:
-        st.error("⚠️ GROQ_API_KEY not found in secrets or environment variables!")
-        st.info("Please add GROQ_API_KEY to your Streamlit secrets.")
+        st.error("⚠️ GROQ_API_KEY not found!")
         st.stop()
     
     client = Groq(api_key=GROQ_API_KEY)
-    
 except Exception as e:
-    st.error(f"⚠️ Error initializing Groq client: {str(e)}")
-    st.info("""
-    **Possible fixes:**
-    1. Update groq library: `pip install --upgrade groq`
-    2. Check your GROQ_API_KEY in Streamlit secrets
-    3. Make sure groq version is >= 0.4.0
-    """)
+    st.error(f"⚠️ Error: {str(e)}")
     st.stop()
 
-# Custom CSS
+# CSS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-    
-    * {
-        font-family: 'Poppins', sans-serif;
-    }
-    
-    .main {
-        background: linear-gradient(135deg, #fef5ff 0%, #f9e7ff 100%);
-    }
-    
+    * { font-family: 'Poppins', sans-serif; }
+    .main { background: linear-gradient(135deg, #fef5ff 0%, #f9e7ff 100%); }
     .stButton>button {
         background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%);
-        color: #4a0e4e;
-        font-weight: 600;
-        border: none;
-        border-radius: 12px;
-        padding: 12px 28px;
-        font-size: 16px;
-        transition: all 0.3s;
+        color: #4a0e4e; font-weight: 600; border: none; border-radius: 12px;
+        padding: 12px 28px; font-size: 16px; transition: all 0.3s;
         box-shadow: 0 4px 15px rgba(226, 169, 241, 0.3);
     }
-    
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(226, 169, 241, 0.5);
-    }
-    
-    h1, h2, h3 {
-        color: #6b1e6f;
-    }
-    
+    .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(226, 169, 241, 0.5); }
+    h1, h2, h3 { color: #6b1e6f; }
     .header-container {
-        text-align: center;
-        padding: 20px;
+        text-align: center; padding: 20px;
         background: linear-gradient(135deg, #e2a9f1 0%, #f5d4ff 100%);
-        border-radius: 20px;
-        margin-bottom: 30px;
+        border-radius: 20px; margin-bottom: 30px;
         box-shadow: 0 8px 25px rgba(226, 169, 241, 0.4);
     }
-    
     .icon-button {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 3px solid #e2a9f1;
+        background: white; padding: 20px; border-radius: 15px;
+        text-align: center; cursor: pointer; transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 3px solid #e2a9f1;
     }
-    
-    .icon-button:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(226, 169, 241, 0.4);
-    }
-    
+    .icon-button:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(226, 169, 241, 0.4); }
     .case-card {
-        background: white;
-        padding: 25px;
-        border-radius: 15px;
-        border-left: 5px solid #e2a9f1;
-        margin: 15px 0;
+        background: white; padding: 25px; border-radius: 15px;
+        border-left: 5px solid #e2a9f1; margin: 15px 0;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    
     .success-box {
         background: linear-gradient(135deg, #d4f5e9 0%, #a8e6cf 100%);
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 5px solid #4caf50;
-        margin: 20px 0;
+        padding: 20px; border-radius: 12px; border-left: 5px solid #4caf50; margin: 20px 0;
     }
-    
     .hospital-card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin: 10px 0;
-        border: 2px solid #e2a9f1;
-        transition: all 0.3s;
+        background: white; padding: 20px; border-radius: 12px;
+        margin: 10px 0; border: 2px solid #e2a9f1; transition: all 0.3s;
     }
-    
-    .hospital-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 6px 20px rgba(226, 169, 241, 0.3);
-    }
-    
+    .hospital-card:hover { transform: translateX(5px); box-shadow: 0 6px 20px rgba(226, 169, 241, 0.3); }
     .status-badge {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 14px;
-        background: #e2a9f1;
-        color: #4a0e4e;
+        display: inline-block; padding: 8px 16px; border-radius: 20px;
+        font-weight: 600; font-size: 14px; background: #e2a9f1; color: #4a0e4e;
     }
-    
     .chat-container {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        margin: 20px 0;
-        max-height: 500px;
-        overflow-y: auto;
+        background: white; border-radius: 15px; padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 20px 0;
+        max-height: 500px; overflow-y: auto;
     }
-    
-    .chat-message {
-        padding: 12px 18px;
-        border-radius: 12px;
-        margin: 10px 0;
-    }
-    
-    .user-message {
-        background: #f3e5f5;
-        color: #4a0e4e;
-        margin-left: 20%;
-    }
-    
-    .bot-message {
-        background: #e2a9f1;
-        color: #4a0e4e;
-        margin-right: 20%;
-    }
-    
+    .chat-message { padding: 12px 18px; border-radius: 12px; margin: 10px 0; }
+    .user-message { background: #f3e5f5; color: #4a0e4e; margin-left: 20%; }
+    .bot-message { background: #e2a9f1; color: #4a0e4e; margin-right: 20%; }
     .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>select {
-        border: 2px solid #e2a9f1;
-        border-radius: 10px;
-        color: #4a0e4e;
+        border: 2px solid #e2a9f1; border-radius: 10px; color: #4a0e4e;
     }
-    
-    label {
-        color: #6b1e6f !important;
-        font-weight: 600 !important;
-    }
-    
-    .stFileUploader {
-        border: 2px dashed #e2a9f1;
-        border-radius: 10px;
-        padding: 10px;
-    }
+    label { color: #6b1e6f !important; font-weight: 600 !important; }
+    .stFileUploader { border: 2px dashed #e2a9f1; border-radius: 10px; padding: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
+# Session state
 if 'cases' not in st.session_state:
     st.session_state.cases = []
 if 'current_page' not in st.session_state:
@@ -195,7 +96,6 @@ if 'current_page' not in st.session_state:
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# Helper functions
 def encode_image(image_file):
     return base64.b64encode(image_file.read()).decode('utf-8')
 
@@ -203,21 +103,14 @@ def analyze_with_groq(prompt, image_data=None):
     try:
         if image_data:
             response = client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{image_data}"
-                                }
-                            }
-                        ]
-                    }
-                ],
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_data}"}}
+                    ]
+                }],
                 max_tokens=1000
             )
         else:
@@ -249,11 +142,9 @@ def show_header():
         </div>
         """, unsafe_allow_html=True)
 
-# Navigation
 def navigate_to(page):
     st.session_state.current_page = page
 
-# Home Page
 def home_page():
     show_header()
     
@@ -322,7 +213,6 @@ def home_page():
         if st.button("Chat Now", key="chat_btn", use_container_width=True):
             navigate_to('chat')
 
-# Injury Page
 def injury_page():
     show_header()
     
@@ -342,10 +232,9 @@ def injury_page():
         elif not uploaded_file:
             st.error("⚠️ Please upload an image!")
         else:
-            with st.spinner("🔍 Analyzing..."):
+            with st.spinner("🔍 Analyzing with AI..."):
                 image_data = encode_image(uploaded_file)
-                prompt = f"""Analyze this animal injury image. Animal: {animal_type}, Location: {location}.
-Description: {description}
+                prompt = f"""Analyze this animal injury image. Animal: {animal_type}, Location: {location}, Description: {description}
 
 Provide:
 1. Severity Level (Minor/Moderate/Severe/Critical)
@@ -353,7 +242,7 @@ Provide:
 3. Immediate Care Required
 4. Recovery Time
 
-Keep it concise."""
+Keep it concise and professional."""
                 
                 analysis = analyze_with_groq(prompt, image_data)
                 
@@ -368,18 +257,12 @@ Keep it concise."""
                 
                 case_id = f"INJ{len(st.session_state.cases) + 1001}"
                 case = {
-                    "id": case_id,
-                    "type": "Injury",
-                    "animal_type": animal_type,
-                    "location": location,
-                    "description": description,
+                    "id": case_id, "type": "Injury", "animal_type": animal_type,
+                    "location": location, "description": description,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "analysis": analysis,
-                    "hospitals": hospitals,
-                    "driver_name": "Rajesh Kumar",
-                    "driver_contact": "+91 98765-11111",
-                    "selected_hospital": None,
-                    "status": "Case Registered"
+                    "analysis": analysis, "hospitals": hospitals,
+                    "driver_name": "Rajesh Kumar", "driver_contact": "+91 98765-11111",
+                    "selected_hospital": None, "status": "Case Registered"
                 }
                 
                 st.session_state.cases.append(case)
@@ -420,7 +303,6 @@ Keep it concise."""
                             st.success(f"✅ Ambulance dispatched to {hospital['name']}!\n\nDriver: Rajesh Kumar\n📞 +91 98765-11111")
                             st.balloons()
 
-# Abuse Page
 def abuse_page():
     show_header()
     
@@ -442,11 +324,9 @@ def abuse_page():
         elif not incident_file:
             st.error("⚠️ Please upload an image!")
         else:
-            with st.spinner("🔍 Processing..."):
+            with st.spinner("🔍 Processing with AI..."):
                 image_data = encode_image(incident_file)
-                prompt = f"""Analyze this animal abuse case.
-Animal: {animal_type}, Abuse Type: {abuse_type}, Location: {location}
-Description: {description}
+                prompt = f"""Analyze this animal abuse case. Animal: {animal_type}, Abuse: {abuse_type}, Location: {location}, Description: {description}
 
 Provide:
 1. Severity Assessment
@@ -462,18 +342,11 @@ Be concise and actionable."""
                 fir_number = f"FIR/{datetime.now().year}/ANM/{len(st.session_state.cases) + 5001}"
                 
                 case = {
-                    "id": case_id,
-                    "type": "Abuse",
-                    "animal_type": animal_type,
-                    "abuse_type": abuse_type,
-                    "location": location,
-                    "description": description,
+                    "id": case_id, "type": "Abuse", "animal_type": animal_type,
+                    "abuse_type": abuse_type, "location": location, "description": description,
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "analysis": analysis,
-                    "culprit_photo": "Provided" if culprit_file else "Not Provided",
-                    "fir_number": fir_number,
-                    "police_notified": False,
-                    "status": "Case Registered"
+                    "analysis": analysis, "culprit_photo": "Provided" if culprit_file else "Not Provided",
+                    "fir_number": fir_number, "police_notified": False, "status": "Case Registered"
                 }
                 
                 st.session_state.cases.append(case)
@@ -499,14 +372,12 @@ Be concise and actionable."""
                     if st.button("📞 Notify Police & File FIR"):
                         st.session_state.cases[-1]['police_notified'] = True
                         st.session_state.cases[-1]['status'] = 'Police Notified - FIR Filed'
-                        st.success(f"✅ Police Notified!\n\n🚔 FIR Number: {fir_number}\n📋 Case ID: {case_id}\n\nAuthorities will contact you soon!")
+                        st.success(f"✅ Police Notified!\n\n🚔 FIR: {fir_number}\n📋 Case: {case_id}\n\nAuthorities will contact you!")
                         st.balloons()
-                
                 with col2:
                     if st.button("📊 Go to Case Status"):
                         navigate_to('status')
 
-# Status Page
 def status_page():
     show_header()
     
@@ -515,7 +386,7 @@ def status_page():
     
     st.markdown(f"""
     <h2 style='color: #6b1e6f;'><i class='fas fa-clipboard-list'></i> Case Status Dashboard
-    <span class="status-badge"><i class='fas fa-folder-open'></i> {len(st.session_state.cases)} Total Cases</span></h2>
+    <span class="status-badge"><i class='fas fa-folder-open'></i> {len(st.session_state.cases)} Cases</span></h2>
     """, unsafe_allow_html=True)
     
     if len(st.session_state.cases) == 0:
@@ -538,7 +409,6 @@ def status_page():
                 <p style="color: #1b5e20; margin: 5px 0;">Total Cases</p>
             </div>
             """, unsafe_allow_html=True)
-        
         with col2:
             st.markdown(f"""
             <div class="case-card" style="text-align: center; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 5px solid #ff9800;">
@@ -546,7 +416,6 @@ def status_page():
                 <p style="color: #bf360c; margin: 5px 0;">Injury Cases</p>
             </div>
             """, unsafe_allow_html=True)
-        
         with col3:
             st.markdown(f"""
             <div class="case-card" style="text-align: center; background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left: 5px solid #f44336;">
@@ -587,7 +456,7 @@ def status_page():
                     st.markdown(f"""
                     <div class="case-card" style="background: #e3f2fd;">
                         <h4 style="color: #1565c0;">Police Status</h4>
-                        <p><strong>FIR Number:</strong> {case['fir_number']}</p>
+                        <p><strong>FIR:</strong> {case['fir_number']}</p>
                         <p><strong>Status:</strong> ✅ Police Notified</p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -599,7 +468,6 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
 
-# Chat Page
 def chat_page():
     show_header()
     
@@ -673,11 +541,9 @@ Respond in a friendly, helpful manner. Keep it concise."""
     with col1:
         if st.button("🚨 Report Injury"):
             navigate_to('injury')
-    
     with col2:
         if st.button("🛡️ Report Abuse"):
             navigate_to('abuse')
-    
     with col3:
         if st.button("📊 Check Status"):
             navigate_to('status')
