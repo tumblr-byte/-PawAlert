@@ -94,11 +94,11 @@ I've seen this happen too many times - little kids throwing stones at animals, p
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pawalert.git
+git clone https://github.com/tumblr-byte/-PawAlert.git
 cd pawalert
 
 # Install dependencies
-pip install streamlit groq python-dotenv
+pip install requirements.txt
 
 # Set up Groq API Key
 # Create .streamlit/secrets.toml
@@ -111,10 +111,8 @@ export GROQ_API_KEY="your_groq_api_key_here"
 streamlit run app.py
 ```
 
-##  Future Enhancements
-We plan to expand PawAlert with multi-language support and real-time GPS tracking for ambulances to serve communities across India. Additionally, we aim to integrate with government databases and NGO networks to create a nationwide animal welfare ecosystem with automated case escalation.
 
-
+We plan to expand PawAlert with multi-language support, real-time GPS tracking for ambulances, and blockchain-based evidence verification for legal cases. Additionally, we aim to implement live veterinary consultations and a donation system to ensure no animal goes untreated due to financial constraints.
 
 ---
 
