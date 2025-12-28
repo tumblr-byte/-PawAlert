@@ -19,12 +19,12 @@ try:
         GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
     
     if not GROQ_API_KEY:
-        st.error("⚠️ GROQ_API_KEY not found!")
+        st.error("GROQ_API_KEY not found!")
         st.stop()
     
     client = Groq(api_key=GROQ_API_KEY)
 except Exception as e:
-    st.error(f"⚠️ Error: {str(e)}")
+    st.error(f"Error: {str(e)}")
     st.stop()
 
 # CSS
@@ -259,7 +259,7 @@ def home_page():
 def injury_page():
     show_header()
     
-    if st.button("⬅️ Back to Home"):
+    if st.button("Back to Home"):
         navigate_to('home')
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-ambulance'></i> Report Animal Injury</h2>", unsafe_allow_html=True)
@@ -272,15 +272,15 @@ def injury_page():
             description = st.text_area("Description of Injury", placeholder="Please describe the injury in detail...")
             uploaded_file = st.file_uploader("Upload Image/Video of Injured Animal", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
             
-            submit = st.form_submit_button("🚨 Submit Report", use_container_width=True)
+            submit = st.form_submit_button("Submit Report", use_container_width=True)
             
             if submit:
                 if not description:
-                    st.error("⚠️ Please provide a description!")
+                    st.error("Please provide a description!")
                 elif not uploaded_file:
                     st.error("⚠️ Please upload an image!")
                 else:
-                    with st.spinner("🔍 Analyzing with AI..."):
+                    with st.spinner(" Analyzing with AI..."):
                         image_data = encode_image(uploaded_file)
                         prompt = f"""Analyze this animal injury image. Animal: {animal_type}, Location: {location}, Description: {description}
 
@@ -389,36 +389,36 @@ Keep it warm, actionable, and professional. Use bullet points for clarity."""
             <div class="dispatch-box">
                 <h2 style="color: #e65100; margin-top: 0;"><i class="fas fa-ambulance"></i> Ambulance Dispatched!</h2>
                 <div class="detail-row">
-                    <span class="detail-label">🏥 Hospital:</span>
+                    <span class="detail-label"> Hospital:</span>
                     <span class="detail-value">{hospital['name']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">🎯 Speciality:</span>
+                    <span class="detail-label"> Speciality:</span>
                     <span class="detail-value">{hospital['speciality']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">📞 Hospital Contact:</span>
+                    <span class="detail-label"> Hospital Contact:</span>
                     <span class="detail-value">{hospital['contact']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">💰 Expected Fees:</span>
+                    <span class="detail-label"> Expected Fees:</span>
                     <span class="detail-value">{hospital['fees']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">📍 Hospital Location:</span>
+                    <span class="detail-label"> Hospital Location:</span>
                     <span class="detail-value">{hospital['location']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">✅ Availability:</span>
+                    <span class="detail-label"> Availability:</span>
                     <span class="detail-value">{hospital['availability']}</span>
                 </div>
                 <hr style="border: 1px solid #ff9800; margin: 15px 0;">
                 <div class="detail-row">
-                    <span class="detail-label">🚗 Ambulance Driver:</span>
+                    <span class="detail-label"> Ambulance Driver:</span>
                     <span class="detail-value">{current_case['driver_name']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">📱 Driver Contact:</span>
+                    <span class="detail-label"> Driver Contact:</span>
                     <span class="detail-value">{current_case['driver_contact']}</span>
                 </div>
             </div>
@@ -433,19 +433,19 @@ Keep it warm, actionable, and professional. Use bullet points for clarity."""
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("📊 Check Detailed Status", use_container_width=True):
+                if st.button(" Check Detailed Status", use_container_width=True):
                     navigate_to('status')
             with col2:
-                if st.button("💬 Ask AI Anything", use_container_width=True):
+                if st.button("Ask AI Anything", use_container_width=True):
                     navigate_to('chat')
 
 
-# PART 2 - ADD THIS AFTER PART 1
+
 
 def abuse_page():
     show_header()
     
-    if st.button("⬅️ Back to Home"):
+    if st.button("Back to Home"):
         navigate_to('home')
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-shield-alt'></i> Report Animal Abuse</h2>", unsafe_allow_html=True)
@@ -460,15 +460,15 @@ def abuse_page():
             incident_file = st.file_uploader("Upload Image/Video of Incident *", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
             culprit_file = st.file_uploader("Upload Photo of Culprit (Optional)", type=['jpg', 'jpeg', 'png'])
             
-            submit = st.form_submit_button("📢 Submit Abuse Report", use_container_width=True)
+            submit = st.form_submit_button("Submit Abuse Report", use_container_width=True)
             
             if submit:
                 if not description:
-                    st.error("⚠️ Please provide a description!")
+                    st.error(" Please provide a description!")
                 elif not incident_file:
-                    st.error("⚠️ Please upload an image!")
+                    st.error("Please upload an image!")
                 else:
-                    with st.spinner("🔍 Processing with AI..."):
+                    with st.spinner("Processing with AI..."):
                         image_data = encode_image(incident_file)
                         culprit_data = encode_image(culprit_file) if culprit_file else None
                         
@@ -523,7 +523,7 @@ Be concise and actionable."""
         
         # Show button only if police not notified
         if not st.session_state.police_notified:
-            if st.button("📞 Notify Police & File FIR", use_container_width=True, key="notify_police"):
+            if st.button("Notify Police & File FIR", use_container_width=True, key="notify_police"):
                 st.session_state.cases[-1]['police_notified'] = True
                 st.session_state.cases[-1]['status'] = 'Police Notified - FIR Filed'
                 st.session_state.police_notified = True
@@ -532,7 +532,7 @@ Be concise and actionable."""
         
         # Show police details if notified
         if st.session_state.police_notified and st.session_state.show_police_details:
-            with st.spinner("🚔 Getting police dispatch details..."):
+            with st.spinner(" Getting police dispatch details..."):
                 police_prompt = f"""You are a police dispatcher handling an animal abuse case. The case has been registered.
 
 Case ID: {current_case['id']}
@@ -558,23 +558,23 @@ Keep it professional, clear, and reassuring. Use bullet points for key actions."
             <div class="police-box">
                 <h2 style="color: #1565c0; margin-top: 0;"><i class="fas fa-shield-alt"></i> Police Notified - FIR Filed</h2>
                 <div class="detail-row">
-                    <span class="detail-label">📋 Case ID:</span>
+                    <span class="detail-label">Case ID:</span>
                     <span class="detail-value">{current_case['id']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">🚔 FIR Number:</span>
+                    <span class="detail-label"> FIR Number:</span>
                     <span class="detail-value">{current_case['fir_number']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">📍 Location:</span>
+                    <span class="detail-label"> Location:</span>
                     <span class="detail-value">{current_case['location']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">⚖️ Abuse Type:</span>
+                    <span class="detail-label"> Abuse Type:</span>
                     <span class="detail-value">{current_case['abuse_type']}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">🕒 Filed At:</span>
+                    <span class="detail-label">Filed At:</span>
                     <span class="detail-value">{current_case['timestamp']}</span>
                 </div>
             </div>
@@ -591,16 +591,16 @@ Keep it professional, clear, and reassuring. Use bullet points for key actions."
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("📊 Check Detailed Status", use_container_width=True, key="abuse_status"):
+                if st.button("Check Detailed Status", use_container_width=True, key="abuse_status"):
                     navigate_to('status')
             with col2:
-                if st.button("💬 Ask AI Anything", use_container_width=True, key="abuse_chat"):
+                if st.button(" Ask AI Anything", use_container_width=True, key="abuse_chat"):
                     navigate_to('chat')
 
 def status_page():
     show_header()
     
-    if st.button("⬅️ Back to Home"):
+    if st.button("Back to Home"):
         navigate_to('home')
     
     st.markdown(f"""
@@ -646,7 +646,7 @@ def status_page():
         st.markdown("<hr style='margin: 30px 0; border: 1px solid #e2a9f1;'>", unsafe_allow_html=True)
         
         for idx, case in enumerate(reversed(st.session_state.cases)):
-            with st.expander(f"📋 {case['id']} - {case['type']} | {case['animal_type']} | {case['timestamp']}", expanded=False):
+            with st.expander(f"{case['id']} - {case['type']} | {case['animal_type']} | {case['timestamp']}", expanded=False):
                 
                 # Show images side by side for abuse cases with culprit photo
                 if case['type'] == 'Abuse' and case.get('culprit_data'):
@@ -661,7 +661,7 @@ def status_page():
                     with col2:
                         st.markdown(f"""
                         <div class="image-container">
-                            <h4 style="color: #6b1e6f; margin-top: 0;">🚨 Culprit Image</h4>
+                            <h4 style="color: #6b1e6f; margin-top: 0;"> Culprit Image</h4>
                             <img src="data:image/jpeg;base64,{case['culprit_data']}" style="max-width: 100%; max-height: 400px; border-radius: 10px;">
                         </div>
                         """, unsafe_allow_html=True)
@@ -677,31 +677,31 @@ def status_page():
                 <div class="case-card">
                     <h3 style="color: #6b1e6f;"><i class="fas fa-info-circle"></i> Case Information</h3>
                     <div class="detail-row">
-                        <span class="detail-label">📋 Case ID:</span>
+                        <span class="detail-label"> Case ID:</span>
                         <span class="detail-value">{case['id']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">🏷️ Type:</span>
+                        <span class="detail-label"> Type:</span>
                         <span class="detail-value">{case['type']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">🐾 Animal:</span>
+                        <span class="detail-label"> Animal:</span>
                         <span class="detail-value">{case['animal_type']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">📍 Location:</span>
+                        <span class="detail-label"> Location:</span>
                         <span class="detail-value">{case['location']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">🕒 Timestamp:</span>
+                        <span class="detail-label"> Timestamp:</span>
                         <span class="detail-value">{case['timestamp']}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">📊 Status:</span>
+                        <span class="detail-label"> Status:</span>
                         <span class="detail-value"><span class="status-badge">{case['status']}</span></span>
                     </div>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2a9f1;">
-                        <span class="detail-label">📝 Description:</span>
+                        <span class="detail-label"> Description:</span>
                         <p style="color: #4a0e4e; margin-top: 8px; line-height: 1.6;">{case['description']}</p>
                     </div>
                 </div>
@@ -713,36 +713,36 @@ def status_page():
                     <div class="dispatch-box">
                         <h3 style="color: #e65100; margin-top: 0;"><i class="fas fa-ambulance"></i> Ambulance & Hospital Details</h3>
                         <div class="detail-row">
-                            <span class="detail-label">🏥 Hospital Name:</span>
+                            <span class="detail-label"> Hospital Name:</span>
                             <span class="detail-value">{hospital['name']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">🎯 Speciality:</span>
+                            <span class="detail-label"> Speciality:</span>
                             <span class="detail-value">{hospital['speciality']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">📞 Hospital Contact:</span>
+                            <span class="detail-label"> Hospital Contact:</span>
                             <span class="detail-value">{hospital['contact']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">💰 Expected Fees:</span>
+                            <span class="detail-label"> Expected Fees:</span>
                             <span class="detail-value">{hospital['fees']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">📍 Hospital Location:</span>
+                            <span class="detail-label"> Hospital Location:</span>
                             <span class="detail-value">{hospital['location']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">✅ Availability:</span>
+                            <span class="detail-label"> Availability:</span>
                             <span class="detail-value">{hospital['availability']}</span>
                         </div>
                         <hr style="border: 1px solid #ff9800; margin: 15px 0;">
                         <div class="detail-row">
-                            <span class="detail-label">🚗 Ambulance Driver:</span>
+                            <span class="detail-label"> Ambulance Driver:</span>
                             <span class="detail-value">{case['driver_name']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">📱 Driver Contact:</span>
+                            <span class="detail-label"> Driver Contact:</span>
                             <span class="detail-value">{case['driver_contact']}</span>
                         </div>
                     </div>
@@ -753,11 +753,11 @@ def status_page():
                     <div class="case-card" style="background: #fff8e1;">
                         <h3 style="color: #f57c00;"><i class="fas fa-exclamation-triangle"></i> Abuse Details</h3>
                         <div class="detail-row">
-                            <span class="detail-label">⚠️ Abuse Type:</span>
+                            <span class="detail-label"> Abuse Type:</span>
                             <span class="detail-value">{case['abuse_type']}</span>
                         </div>
                         <div class="detail-row">
-                            <span class="detail-label">📸 Culprit Photo:</span>
+                            <span class="detail-label"> Culprit Photo:</span>
                             <span class="detail-value">{case['culprit_photo']}</span>
                         </div>
                     </div>
@@ -768,19 +768,19 @@ def status_page():
                         <div class="police-box">
                             <h3 style="color: #1565c0; margin-top: 0;"><i class="fas fa-shield-alt"></i> Police & Legal Status</h3>
                             <div class="detail-row">
-                                <span class="detail-label">🚔 FIR Number:</span>
+                                <span class="detail-label">FIR Number:</span>
                                 <span class="detail-value">{case['fir_number']}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">✅ Police Status:</span>
+                                <span class="detail-label">Police Status:</span>
                                 <span class="detail-value">Notified & FIR Filed</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">📅 Filed At:</span>
+                                <span class="detail-label">Filed At:</span>
                                 <span class="detail-value">{case['timestamp']}</span>
                             </div>
                             <div class="detail-row">
-                                <span class="detail-label">📍 Incident Location:</span>
+                                <span class="detail-label">Incident Location:</span>
                                 <span class="detail-value">{case['location']}</span>
                             </div>
                         </div>
@@ -793,14 +793,14 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button(f"💬 Ask AI About This Case", key=f"ask_ai_{case['id']}_{idx}", use_container_width=True):
+                if st.button(f" Ask AI About This Case", key=f"ask_ai_{case['id']}_{idx}", use_container_width=True):
                     st.session_state.current_case_id = case['id']
                     navigate_to('chat')
 
 def chat_page():
     show_header()
     
-    if st.button("⬅️ Back to Home", key="chat_back"):
+    if st.button("Back to Home", key="chat_back"):
         navigate_to('home')
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-robot'></i> AI Sathi - Your Animal Welfare Assistant</h2>", unsafe_allow_html=True)
@@ -809,7 +809,7 @@ def chat_page():
         if st.session_state.current_case_id:
             current_case = next((c for c in st.session_state.cases if c['id'] == st.session_state.current_case_id), None)
             if current_case:
-                case_context = f"""नमस्ते Friend! 🙏
+                case_context = f"""Hello Friend! 
 
 I am your **AI Sathi**. I can see you have an active case:
 
@@ -844,7 +844,7 @@ I am your **AI Sathi**. I can see you have an active case:
                 
                 st.session_state.chat_history.append({"role": "assistant", "content": case_context})
         else:
-            initial_message = """नमस्ते Friend! 🙏
+            initial_message = """Hello Friend! 
 
 I am your **AI Sathi**. I can help you with:
 
@@ -879,7 +879,7 @@ How can I help you today?"""
     
     col1, col2 = st.columns([4, 1])
     with col1:
-        if st.button("📤 Send", use_container_width=True, key="chat_send"):
+        if st.button("Send", use_container_width=True, key="chat_send"):
             if user_input.strip():
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
@@ -939,7 +939,7 @@ Respond in a caring, professional, and actionable manner. If discussing the curr
                     st.rerun()
     
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True, key="chat_clear"):
+        if st.button(" Clear", use_container_width=True, key="chat_clear"):
             st.session_state.chat_history = []
             st.rerun()
     
@@ -947,13 +947,13 @@ Respond in a caring, professional, and actionable manner. If discussing the curr
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("🚨 Report Injury", key="chat_injury"):
+        if st.button(" Report Injury", key="chat_injury"):
             navigate_to('injury')
     with col2:
-        if st.button("🛡️ Report Abuse", key="chat_abuse"):
+        if st.button(" Report Abuse", key="chat_abuse"):
             navigate_to('abuse')
     with col3:
-        if st.button("📊 Check Status", key="chat_status"):
+        if st.button(" Check Status", key="chat_status"):
             navigate_to('status')
 
 # Main routing logic
