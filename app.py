@@ -336,13 +336,11 @@ Keep it concise and professional."""
                             st.session_state.ambulance_dispatched = True
                             st.rerun()
     
-    # Show ambulance dispatch details if dispatched
     if st.session_state.ambulance_dispatched and len(st.session_state.cases) > 0:
         current_case = st.session_state.cases[-1]
         if current_case['selected_hospital']:
             hospital = current_case['selected_hospital']
             
-            # Generate detailed dispatch message with Groq
             with st.spinner("🚑 Getting ambulance details..."):
                 dispatch_prompt = f"""You are a compassionate emergency dispatcher for animal rescue. An ambulance has been dispatched for an injured {current_case['animal_type']}.
 
@@ -365,6 +363,150 @@ Keep it warm, actionable, and professional. Use bullet points for clarity."""
             st.markdown(f"""
             <div class="dispatch-box">
                 <h2 style="color: #e65100; margin-top: 0;"><i class="fas fa-ambulance"></i> Ambulance Dispatched!</h2>
+                <div class="detail-row">
+                    <span class="detail-label">🏥 Hospital:</span>
+                    <span class="detail-value">{hospital['name']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">🚗 Driver:</span>
+                    <span class="detail-value">{current_case['driver_name']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📞 Contact:</span>
+                    <span class="detail-value">{current_case['driver_contact']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">📍 Destination:</span>
+                    <span class="detail-value">{hospital['location']}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">💰 Expected Fees:</span>
+                    <span class="detail-value">{hospital['fees']}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="case-card" style="background: #fff8e1;">
+                <h3 style="color: #f57c00;"><i class="fas fa-hand-holding-heart"></i> What To Do Now</h3>
+                <p style="color: #4a0e4e; line-height: 1.8; white-space: pre-line;">{dispatch_message}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📊 Check Detailed Status", use_container_width=True):
+                    navigate_to('status')
+            with col2:
+                if st.button("💬 Ask AI Anything", use_container_width=True):
+                    navigate_to('chat')
+
+
+def abuse_page():
+    show_header()
+    
+    if st.button("⬅️ Back to Home"):
+        st.session_state.police_called = False
+        navigate_to('home')
+    
+    st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-shield-alt'></i> Report Animal Abuse</h2>", unsafe_allow_html=True)
+    
+    animal_type = st.selectbox("Animal Type", ["Dog", "Cat", "Cow", "Horse", "Bird", "Buffalo", "Goat", "Other"])
+    abuse_type = st.selectbox("Type of Abuse", ["Physical Abuse", "Neglect", "Abandonment", "Cruelty", "Illegal Trade", "Torture", "Illegal Slaughter", "Other"])
+    location = st.selectbox("Location", ["Connaught Place, Delhi", "MG Road, Bangalore", "Marine Drive, Mumbai"])
+    description = st.text_area("Description of Incident", placeholder="Please provide detailed information...")
+    incident_file = st.file_uploader("Upload Image/Video of Incident *", type=['jpg', 'jpeg', 'png', 'mp4', 'mov'])
+    culprit_file = st.file_uploader("Upload Photo of Culprit (Optional)", type=['jpg', 'jpeg', 'png'])
+    
+    if st.button("📢 Submit Abuse Report", use_container_width=True):
+        if not description:
+            st.error("⚠️ Please provide a description!")
+        elif not incident_file:
+            st.error("⚠️ Please upload an image!")
+        else:
+            with st.spinner("🔍 Processing with AI..."):
+                image_data = encode_image(incident_file)
+                prompt = f"""Analyze this animal abuse case. Animal: {animal_type}, Abuse: {abuse_type}, Location: {location}, Description: {description}
+
+Provide:
+1. Severity Assessment
+2. Immediate Action Needed
+3. Legal Recommendations
+4. Animal Care Suggestions
+
+Be concise and actionable."""
+                
+                analysis = analyze_with_groq(prompt, image_data)
+                
+                case_id = f"ABU{len(st.session_state.cases) + 2001}"
+                fir_number = f"FIR/{datetime.now().year}/ANM/{len(st.session_state.cases) + 5001}"
+                
+                case = {
+                    "id": case_id, "type": "Abuse", "animal_type": animal_type,
+                    "abuse_type": abuse_type, "location": location, "description": description,
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "analysis": analysis, "culprit_photo": "Provided" if culprit_file else "Not Provided",
+                    "fir_number": fir_number, "police_notified": False, "status": "Case Registered",
+                    "image_data": image_data
+                }
+                
+                st.session_state.cases.append(case)
+                st.session_state.current_case_id = case_id
+                
+                st.markdown(f"""
+                <div class="success-box">
+                    <h3 style="color: #2e7d32; margin-top: 0;"><i class="fas fa-check-circle"></i> Abuse Case Registered!</h3>
+                    <p style="color: #1b5e20; font-size: 18px;"><strong>Case ID: {case_id}</strong></p>
+                    <p style="color: #2e7d32;">Timestamp: {case['timestamp']}</p>
+                    <p style="color: #2e7d32;">Culprit Photo: {case['culprit_photo']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div class="case-card">
+                    <h3 style="color: #6b1e6f;"><i class="fas fa-gavel"></i> AI Analysis</h3>
+                    <p style="color: #4a0e4e; line-height: 1.8;">{analysis}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("📞 Notify Police & File FIR", use_container_width=True):
+                    st.session_state.cases[-1]['police_notified'] = True
+                    st.session_state.cases[-1]['status'] = 'Police Notified - FIR Filed'
+                    st.session_state.police_called = True
+                    st.rerun()
+    
+    if st.session_state.police_called and len(st.session_state.cases) > 0:
+        current_case = st.session_state.cases[-1]
+        if current_case['police_notified']:
+            with st.spinner("🚔 Getting police dispatch details..."):
+                police_prompt = f"""You are a police dispatcher handling an animal abuse case. The case has been registered.
+
+Case ID: {current_case['id']}
+FIR Number: {current_case['fir_number']}
+Animal: {current_case['animal_type']}
+Abuse Type: {current_case['abuse_type']}
+Location: {current_case['location']}
+Description: {current_case['description']}
+
+Provide a detailed, professional message that includes:
+1. Confirmation that police have been notified and FIR is filed
+2. Expected arrival time of police team (10-20 minutes)
+3. What actions are being taken immediately
+4. What the reporter should do now (preserve evidence, ensure animal safety)
+5. Next steps in the legal process
+6. Reassurance that justice will be served
+
+Keep it professional, clear, and reassuring. Use bullet points for key actions."""
+
+                police_message = analyze_with_groq(police_prompt)
+            
+            st.markdown(f"""
+            <div class="police-box">
+                <h2 style="color: #1565c0; margin-top: 0;"><i class="fas fa-shield-alt"></i> Police Notified - FIR Filed</h2>
+                <div class="detail-row">
+                    <span class="detail-label">📋 Case ID:</span>
+                    <span class="detail-value">{current_case['id']}</span>
+                </div>
                 <div class="detail-row">
                     <span class="detail-label">🚔 FIR Number:</span>
                     <span class="detail-value">{current_case['fir_number']}</span>
@@ -452,16 +594,14 @@ def status_page():
         for case in reversed(st.session_state.cases):
             with st.expander(f"📋 {case['id']} - {case['type']} | {case['animal_type']} | {case['timestamp']}", expanded=False):
                 
-                # Show animal image
                 if 'image_data' in case:
                     st.markdown(f"""
                     <div class="image-container">
-                        <h4 style="color: #6b1e6f; margin-top: 0;">Animal Image</h4>
-                        <img src="data:image/jpeg;base64,{case['image_data']}" style="max-width: 100%; border-radius: 10px;">
+                        <h4 style="color: #6b1e6f; margin-top: 0;">📷 Animal Image</h4>
+                        <img src="data:image/jpeg;base64,{case['image_data']}" style="max-width: 100%; max-height: 400px; border-radius: 10px;">
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Basic case information
                 st.markdown(f"""
                 <div class="case-card">
                     <h3 style="color: #6b1e6f;"><i class="fas fa-info-circle"></i> Case Information</h3>
@@ -496,7 +636,6 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Injury case specific details
                 if case['type'] == 'Injury':
                     if case.get('selected_hospital'):
                         hospital = case['selected_hospital']
@@ -531,10 +670,13 @@ def status_page():
                                 <span class="detail-label">📍 Destination:</span>
                                 <span class="detail-value">{hospital['location']}</span>
                             </div>
+                            <div class="detail-row">
+                                <span class="detail-label">✅ Availability:</span>
+                                <span class="detail-value">{hospital['availability']}</span>
+                            </div>
                         </div>
                         """, unsafe_allow_html=True)
                 
-                # Abuse case specific details
                 if case['type'] == 'Abuse':
                     st.markdown(f"""
                     <div class="case-card" style="background: #fff8e1;">
@@ -566,10 +708,13 @@ def status_page():
                                 <span class="detail-label">📅 Filed At:</span>
                                 <span class="detail-value">{case['timestamp']}</span>
                             </div>
+                            <div class="detail-row">
+                                <span class="detail-label">📍 Incident Location:</span>
+                                <span class="detail-value">{case['location']}</span>
+                            </div>
                         </div>
                         """, unsafe_allow_html=True)
                 
-                # AI Analysis
                 st.markdown(f"""
                 <div class="case-card" style="background: #f3e5f5;">
                     <h3 style="color: #6b1e6f;"><i class="fas fa-brain"></i> AI Analysis</h3>
@@ -577,8 +722,7 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Ask AI button for this specific case
-                if st.button(f"💬 Ask AI About This Case", key=f"ask_ai_{case['id']}"):
+                if st.button(f"💬 Ask AI About This Case", key=f"ask_ai_{case['id']}", use_container_width=True):
                     st.session_state.current_case_id = case['id']
                     navigate_to('chat')
 
@@ -590,10 +734,8 @@ def chat_page():
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-robot'></i> AI Sathi - Your Animal Welfare Assistant</h2>", unsafe_allow_html=True)
     
-    # Initialize chat with current case context if available
     if len(st.session_state.chat_history) == 0:
         if st.session_state.current_case_id:
-            # Find the current case
             current_case = next((c for c in st.session_state.cases if c['id'] == st.session_state.current_case_id), None)
             if current_case:
                 case_context = f"""नमस्ते Friend! 🙏
@@ -610,13 +752,17 @@ I am your **AI Sathi**. I can see you have an active case:
                 if current_case['type'] == 'Injury' and current_case.get('selected_hospital'):
                     hospital = current_case['selected_hospital']
                     case_context += f"""**Hospital:** {hospital['name']}
+**Speciality:** {hospital['speciality']}
+**Hospital Contact:** {hospital['contact']}
 **Driver:** {current_case['driver_name']} ({current_case['driver_contact']})
+**Fees:** {hospital['fees']}
 
 """
                 
                 if current_case['type'] == 'Abuse' and current_case.get('police_notified'):
                     case_context += f"""**FIR Number:** {current_case['fir_number']}
-**Police Status:** Notified
+**Police Status:** Notified & FIR Filed
+**Abuse Type:** {current_case['abuse_type']}
 
 """
                 
@@ -664,7 +810,6 @@ How can I help you today?"""
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 with st.spinner("Thinking..."):
-                    # Build context with current case if available
                     context = ""
                     if st.session_state.current_case_id:
                         current_case = next((c for c in st.session_state.cases if c['id'] == st.session_state.current_case_id), None)
@@ -681,9 +826,10 @@ How can I help you today?"""
                             if current_case['type'] == 'Injury' and current_case.get('selected_hospital'):
                                 hospital = current_case['selected_hospital']
                                 context += f"""- Hospital: {hospital['name']}
-- Driver: {current_case['driver_name']} ({current_case['driver_contact']})
+- Hospital Speciality: {hospital['speciality']}
 - Hospital Contact: {hospital['contact']}
-- Fees: {hospital['fees']}
+- Hospital Fees: {hospital['fees']}
+- Driver: {current_case['driver_name']} ({current_case['driver_contact']})
 """
                             
                             if current_case['type'] == 'Abuse':
@@ -692,12 +838,12 @@ How can I help you today?"""
 """
                                 if current_case.get('police_notified'):
                                     context += f"""- FIR Number: {current_case['fir_number']}
-- Police: Notified
+- Police: Notified & FIR Filed
 """
                     
                     prompt = f"""You are AI Sathi, a compassionate and knowledgeable animal welfare assistant with deep understanding of:
 - Animal emergency care and first aid
-- Indian animal welfare laws and IPC sections
+- Indian animal welfare laws (IPC Section 428, 429, Prevention of Cruelty to Animals Act 1960)
 - Veterinary services and procedures
 - Animal behavior and psychology
 - Legal processes for animal abuse cases
@@ -709,7 +855,7 @@ Previous conversation:
 
 Current question: {user_input}
 
-Respond in a caring, professional, and actionable manner. If discussing the current case, use specific details. Keep responses concise but comprehensive."""
+Respond in a caring, professional, and actionable manner. If discussing the current case, use specific details from the case context. Provide practical advice. Keep responses concise but comprehensive."""
                     
                     response = analyze_with_groq(prompt)
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
@@ -733,7 +879,6 @@ Respond in a caring, professional, and actionable manner. If discussing the curr
         if st.button("📊 Check Status"):
             navigate_to('status')
 
-# Main Router
 if st.session_state.current_page == 'home':
     home_page()
 elif st.session_state.current_page == 'injury':
@@ -743,40 +888,4 @@ elif st.session_state.current_page == 'abuse':
 elif st.session_state.current_page == 'status':
     status_page()
 elif st.session_state.current_page == 'chat':
-    chat_page()="detail-label">🏥 Hospital:</span>
-                    <span class="detail-value">{hospital['name']}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">🚗 Driver:</span>
-                    <span class="detail-value">{current_case['driver_name']}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">📞 Contact:</span>
-                    <span class="detail-value">{current_case['driver_contact']}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">📍 Destination:</span>
-                    <span class="detail-value">{hospital['location']}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">💰 Expected Fees:</span>
-                    <span class="detail-value">{hospital['fees']}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"""
-            <div class="case-card" style="background: #fff8e1;">
-                <h3 style="color: #f57c00;"><i class="fas fa-hand-holding-heart"></i> What To Do Now</h3>
-                <p style="color: #4a0e4e; line-height: 1.8; white-space: pre-line;">{dispatch_message}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("📊 Check Detailed Status", use_container_width=True):
-                    navigate_to('status')
-            with col2:
-                if st.button("💬 Ask AI Anything", use_container_width=True):
-                    navigate_to('chat')
-
+    chat_page()
