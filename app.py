@@ -401,7 +401,6 @@ Keep it warm, actionable, and professional. Use bullet points for clarity."""
                 if st.button("💬 Ask AI Anything", use_container_width=True):
                     navigate_to('chat')
 
-
 def abuse_page():
     show_header()
     
@@ -469,7 +468,7 @@ Be concise and actionable."""
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button("📞 Notify Police & File FIR", use_container_width=True):
+                if st.button("📞 Notify Police & File FIR", use_container_width=True, key="notify_police"):
                     st.session_state.cases[-1]['police_notified'] = True
                     st.session_state.cases[-1]['status'] = 'Police Notified - FIR Filed'
                     st.session_state.police_called = True
@@ -477,7 +476,7 @@ Be concise and actionable."""
     
     if st.session_state.police_called and len(st.session_state.cases) > 0:
         current_case = st.session_state.cases[-1]
-        if current_case['police_notified']:
+        if current_case.get('police_notified'):
             with st.spinner("🚔 Getting police dispatch details..."):
                 police_prompt = f"""You are a police dispatcher handling an animal abuse case. The case has been registered.
 
@@ -537,10 +536,10 @@ Keep it professional, clear, and reassuring. Use bullet points for key actions."
             
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("📊 Check Detailed Status", use_container_width=True):
+                if st.button("📊 Check Detailed Status", use_container_width=True, key="abuse_status"):
                     navigate_to('status')
             with col2:
-                if st.button("💬 Ask AI Anything", use_container_width=True):
+                if st.button("💬 Ask AI Anything", use_container_width=True, key="abuse_chat"):
                     navigate_to('chat')
 
 def status_page():
@@ -591,7 +590,7 @@ def status_page():
         
         st.markdown("<hr style='margin: 30px 0; border: 1px solid #e2a9f1;'>", unsafe_allow_html=True)
         
-        for case in reversed(st.session_state.cases):
+        for idx, case in enumerate(reversed(st.session_state.cases)):
             with st.expander(f"📋 {case['id']} - {case['type']} | {case['animal_type']} | {case['timestamp']}", expanded=False):
                 
                 if 'image_data' in case:
@@ -636,46 +635,46 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if case['type'] == 'Injury':
-                    if case.get('selected_hospital'):
-                        hospital = case['selected_hospital']
-                        st.markdown(f"""
-                        <div class="dispatch-box">
-                            <h3 style="color: #e65100; margin-top: 0;"><i class="fas fa-ambulance"></i> Ambulance & Hospital Details</h3>
-                            <div class="detail-row">
-                                <span class="detail-label">🏥 Hospital:</span>
-                                <span class="detail-value">{hospital['name']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">🎯 Speciality:</span>
-                                <span class="detail-value">{hospital['speciality']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">📞 Hospital Contact:</span>
-                                <span class="detail-value">{hospital['contact']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">💰 Fees:</span>
-                                <span class="detail-value">{hospital['fees']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">🚗 Driver Name:</span>
-                                <span class="detail-value">{case['driver_name']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">📱 Driver Contact:</span>
-                                <span class="detail-value">{case['driver_contact']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">📍 Destination:</span>
-                                <span class="detail-value">{hospital['location']}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">✅ Availability:</span>
-                                <span class="detail-value">{hospital['availability']}</span>
-                            </div>
+                if case['type'] == 'Injury' and case.get('selected_hospital'):
+                    hospital = case['selected_hospital']
+                    st.markdown(f"""
+                    <div class="dispatch-box">
+                        <h3 style="color: #e65100; margin-top: 0;"><i class="fas fa-ambulance"></i> Ambulance & Hospital Details</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">🏥 Hospital Name:</span>
+                            <span class="detail-value">{hospital['name']}</span>
                         </div>
-                        """, unsafe_allow_html=True)
+                        <div class="detail-row">
+                            <span class="detail-label">🎯 Speciality:</span>
+                            <span class="detail-value">{hospital['speciality']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">📞 Hospital Contact:</span>
+                            <span class="detail-value">{hospital['contact']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">💰 Expected Fees:</span>
+                            <span class="detail-value">{hospital['fees']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">📍 Hospital Location:</span>
+                            <span class="detail-value">{hospital['location']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">✅ Availability:</span>
+                            <span class="detail-value">{hospital['availability']}</span>
+                        </div>
+                        <hr style="border: 1px solid #ff9800; margin: 15px 0;">
+                        <div class="detail-row">
+                            <span class="detail-label">🚗 Ambulance Driver:</span>
+                            <span class="detail-value">{case['driver_name']}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">📱 Driver Contact:</span>
+                            <span class="detail-value">{case['driver_contact']}</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
                 if case['type'] == 'Abuse':
                     st.markdown(f"""
@@ -722,14 +721,14 @@ def status_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button(f"💬 Ask AI About This Case", key=f"ask_ai_{case['id']}", use_container_width=True):
+                if st.button(f"💬 Ask AI About This Case", key=f"ask_ai_{case['id']}_{idx}", use_container_width=True):
                     st.session_state.current_case_id = case['id']
                     navigate_to('chat')
 
 def chat_page():
     show_header()
     
-    if st.button("⬅️ Back to Home"):
+    if st.button("⬅️ Back to Home", key="chat_back"):
         navigate_to('home')
     
     st.markdown("<h2 style='color: #6b1e6f;'><i class='fas fa-robot'></i> AI Sathi - Your Animal Welfare Assistant</h2>", unsafe_allow_html=True)
@@ -801,11 +800,11 @@ How can I help you today?"""
             """, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
-    user_input = st.text_area("Type your message...", height=100, placeholder="Ask me anything...")
+    user_input = st.text_area("Type your message...", height=100, placeholder="Ask me anything...", key="chat_input")
     
     col1, col2 = st.columns([4, 1])
     with col1:
-        if st.button("📤 Send", use_container_width=True):
+        if st.button("📤 Send", use_container_width=True, key="chat_send"):
             if user_input.strip():
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
@@ -862,7 +861,7 @@ Respond in a caring, professional, and actionable manner. If discussing the curr
                     st.rerun()
     
     with col2:
-        if st.button("🗑️ Clear", use_container_width=True):
+        if st.button("🗑️ Clear", use_container_width=True, key="chat_clear"):
             st.session_state.chat_history = []
             st.rerun()
     
@@ -870,13 +869,13 @@ Respond in a caring, professional, and actionable manner. If discussing the curr
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("🚨 Report Injury"):
+        if st.button("🚨 Report Injury", key="chat_injury"):
             navigate_to('injury')
     with col2:
-        if st.button("🛡️ Report Abuse"):
+        if st.button("🛡️ Report Abuse", key="chat_abuse"):
             navigate_to('abuse')
     with col3:
-        if st.button("📊 Check Status"):
+        if st.button("📊 Check Status", key="chat_status"):
             navigate_to('status')
 
 if st.session_state.current_page == 'home':
