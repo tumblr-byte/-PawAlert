@@ -259,7 +259,12 @@ def injury_page():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("<div class='case-card'><h3 style='color: #6b1e6f;'><i class='fas fa-notes-medical'></i> AI Analysis</h3></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+                  <div class='case-card'>
+    <h3 style='color: #6b1e6f;'><i class='fas fa-notes-medical'></i> AI Analysis</h3>
+    <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['analysis']}</div>
+</div>
+""", unsafe_allow_html=True)
         st.markdown(current_case['analysis'])
         
         if current_case.get('selected_hospital'):
@@ -301,7 +306,12 @@ def injury_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("<div class='case-card' style='background: #fff8e1;'><h3 style='color: #f57c00;'><i class='fas fa-hand-holding-heart'></i> What To Do Now</h3></div>", unsafe_allow_html=True)
+                st.markdown(f"""
+<div class='case-card' style='background: #fff8e1;'>
+    <h3 style='color: #f57c00;'><i class='fas fa-hand-holding-heart'></i> What To Do Now</h3>
+    <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['dispatch_message']}</div>
+</div>
+""", unsafe_allow_html=True)
                 st.markdown(current_case['dispatch_message'])
                 
                 col1, col2 = st.columns(2)
@@ -430,7 +440,12 @@ def abuse_page():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("<div class='case-card'><h3 style='color: #6b1e6f;'><i class='fas fa-gavel'></i> AI Analysis</h3></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+<div class='case-card'>
+    <h3 style='color: #6b1e6f;'><i class='fas fa-gavel'></i> AI Analysis</h3>
+    <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['analysis']}</div>
+</div>
+""", unsafe_allow_html=True)
         st.markdown(current_case['analysis'])
         
         if current_case.get('police_notified'):
@@ -461,7 +476,12 @@ def abuse_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown("<div class='case-card' style='background: #e8f5e9;'><h3 style='color: #2e7d32;'><i class='fas fa-info-circle'></i> Police Action Details</h3></div>", unsafe_allow_html=True)
+                st.markdown(f"""
+<div class='case-card' style='background: #e8f5e9;'>
+    <h3 style='color: #2e7d32;'><i class='fas fa-info-circle'></i> Police Action Details</h3>
+    <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['police_message']}</div>
+</div>
+""", unsafe_allow_html=True)
                 st.markdown(current_case['police_message'])
                 
                 st.balloons()
@@ -724,7 +744,12 @@ def status_page():
                         </div>
                         """, unsafe_allow_html=True)
                 
-                st.markdown("<div class='case-card' style='background: #f3e5f5;'><h3 style='color: #6b1e6f;'><i class='fas fa-brain'></i> AI Analysis</h3></div>", unsafe_allow_html=True)
+                st.markdown(f"""
+<div class='case-card' style='background: #f3e5f5;'>
+    <h3 style='color: #6b1e6f;'><i class='fas fa-brain'></i> AI Analysis</h3>
+    <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{case['analysis']}</div>
+</div>
+""", unsafe_allow_html=True)
                 st.markdown(case['analysis'])
                 
                 if st.button(f"Ask AI About This Case", key=f"ask_{case['id']}_{idx}", use_container_width=True):
