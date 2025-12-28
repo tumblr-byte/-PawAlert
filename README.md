@@ -62,7 +62,7 @@ I've seen this happen too many times - little kids throwing stones at animals, p
 - **Llama 3.3 70B** - Text generation for assistance
 
 ### **Backend**
-- **Python 3.8+** - Core application logic
+- **Python 3.10** - Core application logic
 - **Base64** - Image encoding and storage
 - **Session State Management** - Case tracking
 
