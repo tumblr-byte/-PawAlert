@@ -95,7 +95,6 @@ st.markdown("""
         margin: 20px 0; box-shadow: 0 6px 20px rgba(255, 152, 0, 0.3);
     }
     .dispatch-box p {
-        color: #4a0e4e !important;
         line-height: 1.8;
         white-space: pre-line;
     }
@@ -105,10 +104,22 @@ st.markdown("""
         margin: 20px 0; box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
     }
     .police-box p {
-        color: #4a0e4e !important;
+        
         line-height: 1.8;
         white-space: pre-line;
     }
+
+    .case-card p, .case-card ul, .case-card ol, .case-card li {
+    color: #4a0e4e !important;
+}
+
+.dispatch-box p, .dispatch-box ul, .dispatch-box ol, .dispatch-box li {
+    color: #4a0e4e !important;
+}
+
+.police-box p, .police-box ul, .police-box ol, .police-box li {
+    color: #4a0e4e !important;
+}
     .detail-row {
         display: flex; justify-content: space-between; padding: 12px 0;
         border-bottom: 1px solid #e2a9f1;
