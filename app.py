@@ -265,7 +265,7 @@ def injury_page():
     <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['analysis']}</div>
 </div>
 """, unsafe_allow_html=True)
-        st.markdown(current_case['analysis'])
+        
         
         if current_case.get('selected_hospital'):
             hospital = current_case['selected_hospital']
@@ -312,7 +312,7 @@ def injury_page():
     <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['dispatch_message']}</div>
 </div>
 """, unsafe_allow_html=True)
-                st.markdown(current_case['dispatch_message'])
+               
                 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -446,7 +446,7 @@ def abuse_page():
     <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['analysis']}</div>
 </div>
 """, unsafe_allow_html=True)
-        st.markdown(current_case['analysis'])
+      
         
         if current_case.get('police_notified'):
             if 'police_message' in current_case:
@@ -482,7 +482,7 @@ def abuse_page():
     <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{current_case['police_message']}</div>
 </div>
 """, unsafe_allow_html=True)
-                st.markdown(current_case['police_message'])
+               
                 
                 st.balloons()
                 
@@ -750,7 +750,7 @@ def status_page():
     <div style='color: #4a0e4e; line-height: 1.8; white-space: pre-wrap;'>{case['analysis']}</div>
 </div>
 """, unsafe_allow_html=True)
-                st.markdown(case['analysis'])
+                
                 
                 if st.button(f"Ask AI About This Case", key=f"ask_{case['id']}_{idx}", use_container_width=True):
                     st.session_state.current_case_id = case['id']
