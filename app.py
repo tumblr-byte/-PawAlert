@@ -106,6 +106,26 @@ st.markdown("""
         border: 3px solid #e2a9f1; border-radius: 15px;
         padding: 10px; background: white;
     }
+
+    .stExpander {
+        background: white; border: 2px solid #e2a9f1; border-radius: 12px;
+        margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .stExpander summary {
+        color: #4a0e4e !important; font-weight: 600 !important;
+        font-size: 16px !important; padding: 15px !important;
+        background: linear-gradient(135deg, #f9e7ff 0%, #fef5ff 100%) !important;
+        border-radius: 10px !important;
+    }
+    .stExpander summary:hover {
+        background: linear-gradient(135deg, #e2a9f1 0%, #f5d4ff 100%) !important;
+        color: #6b1e6f !important;
+    }
+    .stExpander[open] summary {
+        background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%) !important;
+        color: #4a0e4e !important;
+        border-bottom: 2px solid #d89fe8;
+    }
 </style>
 """, unsafe_allow_html=True)
 
