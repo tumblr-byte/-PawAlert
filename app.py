@@ -107,24 +107,42 @@ st.markdown("""
         padding: 10px; background: white;
     }
 
-    .stExpander {
-        background: white; border: 2px solid #e2a9f1; border-radius: 12px;
-        margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+   .stExpander {
+        background: white !important; 
+        border: 2px solid #e2a9f1 !important; 
+        border-radius: 12px !important;
+        margin: 15px 0 !important; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
-    .stExpander summary {
-        color: #4a0e4e !important; font-weight: 600 !important;
-        font-size: 16px !important; padding: 15px !important;
+    .stExpander summary, .stExpander summary p, .stExpander summary span, 
+    .stExpander summary div, .stExpander [data-testid="stExpanderDetails"] summary {
+        color: #4a0e4e !important; 
+        font-weight: 600 !important;
+        font-size: 16px !important; 
+        padding: 15px !important;
         background: linear-gradient(135deg, #f9e7ff 0%, #fef5ff 100%) !important;
         border-radius: 10px !important;
     }
-    .stExpander summary:hover {
+    .stExpander:hover summary, .stExpander:hover summary p, 
+    .stExpander:hover summary span, .stExpander:hover summary div {
         background: linear-gradient(135deg, #e2a9f1 0%, #f5d4ff 100%) !important;
-        color: #6b1e6f !important;
+        color: #2d0a30 !important;
     }
-    .stExpander[open] summary {
+    .stExpander[open] summary, .stExpander[open] summary p,
+    .stExpander[open] summary span, .stExpander[open] summary div {
         background: linear-gradient(135deg, #e2a9f1 0%, #d89fe8 100%) !important;
+        color: #2d0a30 !important;
+        border-bottom: 2px solid #d89fe8 !important;
+    }
+
+    div[data-testid="stExpander"] > details > summary {
         color: #4a0e4e !important;
-        border-bottom: 2px solid #d89fe8;
+        background: linear-gradient(135deg, #f9e7ff 0%, #fef5ff 100%) !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stExpander"] > details > summary:hover {
+        color: #2d0a30 !important;
+        background: linear-gradient(135deg, #e2a9f1 0%, #f5d4ff 100%) !important;
     }
 </style>
 """, unsafe_allow_html=True)
