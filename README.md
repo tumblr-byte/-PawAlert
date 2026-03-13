@@ -94,7 +94,7 @@ I've seen this happen too many times - little kids throwing stones at animals, p
 
 ```bash
 # Clone the repository
-git clone https://github.com/tumblr-byte/-PawAlert.git
+git clone https://github.com/Pooja-Vachhad/-PawAlert.git
 cd pawalert
 
 # Install dependencies
